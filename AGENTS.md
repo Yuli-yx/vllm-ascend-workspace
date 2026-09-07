@@ -53,6 +53,7 @@ Repo-local skills live under `.agents/skills/`. Each has its own `SKILL.md` with
 | `remote-toolbox` | Compatibility backend for managed VAWS target/probe/exec/job/sync/service/artifact/cleanup tools |
 | `remote-code-parity` | Sync local working tree to remote container before execution |
 | `vllm-ascend-build` | Compile pinned vLLM/Ascend revisions, assess native rebuild needs, and verify runtime parity |
+| `aisbench-accuracy` | Run dataset accuracy evaluation with aligned sampling, prompts, postprocessing and baseline settings |
 | `modelscope` | Download / resume / status-check / SHA256-verify ModelScope model weights under explicit local directories |
 | `vllm-ascend-serving` | Start / check / stop a vLLM Ascend service on a remote container |
 | `vllm-ascend-benchmark` | Run `vllm bench serve` benchmarks (single-run or multi-run with warmup) |
