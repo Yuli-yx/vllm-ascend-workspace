@@ -83,10 +83,11 @@ SEMVER_TAG_PATTERN = re.compile(
     r"^v?(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(?:(?P<kind>rc)(?P<kind_number>\d+))?$",
     re.IGNORECASE,
 )
-MACHINE_TYPE_CHOICES = ("A2", "A3", "310P")
+MACHINE_TYPE_CHOICES = ("A2", "A3", "A5", "310P")
 IMAGE_SUFFIX_BY_MACHINE_TYPE = {
     "A2": "",
     "A3": "-a3",
+    "A5": "-a5",
     "310P": "-310p",
 }
 SOC_TO_MACHINE_TYPE = {
@@ -105,6 +106,9 @@ SOC_TO_MACHINE_TYPE = {
     "ascend910_9392": "A3",
     "ascend910_9382": "A3",
     "ascend910_9362": "A3",
+    "ascend950": "A5",
+    "ascend_950": "A5",
+    "950pr": "A5",
     "ascend310p1": "310P",
     "ascend310p3": "310P",
     "ascend310p5": "310P",
@@ -149,7 +153,7 @@ def normalize_machine_type(value: str | None) -> str | None:
     normalized = value.strip().upper().replace("_", "")
     if normalized == "310P":
         return "310P"
-    if normalized in {"A2", "A3"}:
+    if normalized in {"A2", "A3", "A5"}:
         return normalized
     raise MachineManagementError(
         f"unsupported machine type {value!r}; expected one of: {', '.join(MACHINE_TYPE_CHOICES)}"
@@ -223,6 +227,8 @@ def infer_machine_type_from_image(ref: str | None) -> str | None:
     lowered = tag.lower()
     if "-310p" in lowered:
         return "310P"
+    if "-a5" in lowered:
+        return "A5"
     if "-a3" in lowered:
         return "A3"
     if docker_ref_repo(ref).endswith("ascend/vllm-ascend"):
@@ -660,7 +666,7 @@ def write_askpass_helper(temp_dir: pathlib.Path, env_name: str) -> pathlib.Path:
         helper_py = temp_dir / "askpass.py"
         helper_py.write_text(
             "import os, sys\n"
-            f"sys.stdout.write(os.environ.get({env_name!r}, '') + '\n')\n",
+            f"sys.stdout.write(os.environ.get({env_name!r}, '') + '\\n')\n",
             encoding="utf-8",
         )
         helper = temp_dir / "askpass.cmd"
@@ -760,8 +766,15 @@ def run_remote_script(
     batch_mode: bool = True,
     timeout_seconds: int | None = None,
     stream_progress: bool = True,
+    sudo_password: str | None = None,
 ) -> RemoteResult:
-    remote_cmd = remote_shell_command(["bash", "-s", "--", *args])
+    remote_argv = ["bash", "-s", "--", *args]
+    if sudo_password is not None:
+        # Force a fresh sudo authentication so sudo consumes exactly the first
+        # stdin line. The remaining stdin is the bash program. The credential
+        # stays in process memory and is never written to argv or disk.
+        remote_argv = ["sudo", "-k", "-S", "-p", "", *remote_argv]
+    remote_cmd = remote_shell_command(remote_argv)
     cmd = ssh_command(target, batch_mode=batch_mode) + [remote_cmd]
     try:
         proc = subprocess.Popen(
@@ -779,7 +792,14 @@ def run_remote_script(
         ) from exc
 
     assert proc.stdin is not None
-    proc.stdin.write(script)
+    # Write through the underlying binary buffer so Windows text mode does not
+    # translate "\n" into "\r\n" and corrupt the remote bash script (CRLF makes
+    # remote bash reject lines like `set -euo pipefail`).
+    stdin_payload = script
+    if sudo_password is not None:
+        stdin_payload = f"{sudo_password}\n{script}"
+    proc.stdin.buffer.write(stdin_payload.encode("utf-8"))
+    proc.stdin.buffer.flush()
     proc.stdin.close()
 
     q: queue.Queue[tuple[str, str | None]] = queue.Queue()
@@ -1095,10 +1115,10 @@ result: dict[str, object] = {
     },
 }
 
+machine_type = str(image.get("machine_type") or "").upper()
 required = [
     "/dev/davinci_manager",
     "/dev/hisi_hdc",
-    "/dev/devmm_svm",
     "/usr/local/Ascend/driver",
     "/usr/local/Ascend/driver/lib64/common",
     "/usr/local/Ascend/driver/lib64/driver",
@@ -1107,6 +1127,11 @@ required = [
     "/usr/local/sbin",
     "/usr/share/zoneinfo/Asia/Shanghai",
 ]
+if machine_type == "A5":
+    required.extend(["/dev/ummu", "/dev/uburma"])
+    required.extend(f"/dev/davinci{i}" for i in range(8))
+else:
+    required.append("/dev/devmm_svm")
 for item in required:
     exists = pathlib.Path(item).exists()
     result["required_paths"][item] = exists
@@ -1329,6 +1354,10 @@ infer_type_from_image() {
       printf 'A3\n'
       return 0
       ;;
+    *-a5*)
+      printf 'A5\n'
+      return 0
+      ;;
   esac
   repo_part="$image_ref"
   if [[ "$repo_part" == *"@"* ]]; then
@@ -1389,6 +1418,9 @@ if [ -n "$host_soc" ]; then
 fi
 if [ -n "$host_image" ]; then
   export VAWS_CONTAINER_IMAGE="$host_image"
+fi
+if [ "$host_machine_type" = "A5" ]; then
+  export ASCEND_LOCAL_COMM_RES='{"version":"1.3"}'
 fi
 EOF_HOST_ENV
   chmod 0644 "$host_env_file"
@@ -1660,6 +1692,9 @@ fi
 if [ -n "$image" ]; then
   export VAWS_CONTAINER_IMAGE="$image"
 fi
+if [ "$machine_type" = "A5" ]; then
+  export ASCEND_LOCAL_COMM_RES='{"version":"1.3"}'
+fi
 EOF_CONTAINER_ENV
 chmod 0644 /etc/profile.d/vaws-ascend-env.sh
 python3 - "$machine_type" "$container_type" "$soc" "$image" "$workdir" "$namespace" "$_vaws_atb_cxx_abi" > /etc/vaws/container-info.json <<'PY'
@@ -1737,11 +1772,10 @@ if ! docker info >/dev/null 2>&1; then
   exit 11
 fi
 
-missing=()
-for p in \
+preflight_machine_type="${machine_type_input:-$(image_field machine_type || true)}"
+required_paths=(
   /dev/davinci_manager \
   /dev/hisi_hdc \
-  /dev/devmm_svm \
   /usr/local/Ascend/driver \
   /usr/local/Ascend/driver/lib64/common \
   /usr/local/Ascend/driver/lib64/driver \
@@ -1749,7 +1783,17 @@ for p in \
   /usr/local/bin/npu-smi \
   /usr/local/sbin \
   /usr/share/zoneinfo/Asia/Shanghai
-  do
+)
+if [ "$preflight_machine_type" = "A5" ]; then
+  required_paths+=(/dev/ummu /dev/uburma)
+  for device_id in 0 1 2 3 4 5 6 7; do
+    required_paths+=("/dev/davinci${device_id}")
+  done
+else
+  required_paths+=(/dev/devmm_svm)
+fi
+missing=()
+for p in "${required_paths[@]}"; do
   [ -e "$p" ] || missing+=("$p")
 done
 if [ "${#missing[@]}" -gt 0 ]; then
@@ -1916,8 +1960,35 @@ else
     fi
   done
 
+  device_args=(
+    --device=/dev/davinci_manager
+    --device=/dev/hisi_hdc
+  )
+  if [ "$machine_type" = "A5" ]; then
+    device_args+=(--device=/dev/ummu --device=/dev/uburma)
+    for device_id in 0 1 2 3 4 5 6 7; do
+      device_args+=("--device=/dev/davinci${device_id}")
+    done
+    for optional_bind in \
+      /usr/local/Ascend/firmware \
+      /root/host \
+      /var/log/npu \
+      /etc/hccl_rootinfo.json \
+      /etc/hccn.conf \
+      /usr/lib64 \
+      /etc/hixlep \
+      /usr/bin/urma_admin \
+      /lib/route.conf; do
+      if [ -e "$optional_bind" ]; then
+        mount_args+=("-v" "$optional_bind:$optional_bind")
+      fi
+    done
+  else
+    device_args+=(--device=/dev/devmm_svm)
+  fi
+
   emit_progress "container" "running" "creating managed container" 45
-  docker run --name "$container" -it -d --network host --shm-size=500g \
+  docker run -u root --name "$container" -it -d --network host --shm-size=500g \
     --privileged=true \
     --label com.vaws.managed=true \
     --label com.vaws.container_ssh_port="$port" \
@@ -1927,9 +1998,7 @@ else
     --label com.vaws.container_type="$machine_type" \
     --label com.vaws.soc="$soc" \
     -w "$workdir" \
-    --device=/dev/davinci_manager \
-    --device=/dev/hisi_hdc \
-    --device=/dev/devmm_svm \
+    "${device_args[@]}" \
     --entrypoint=bash \
     -v /usr/local/Ascend/driver:/usr/local/Ascend/driver \
     -v /usr/local/dcmi:/usr/local/dcmi \

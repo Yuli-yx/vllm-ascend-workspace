@@ -186,10 +186,19 @@ def main(argv: Sequence[str] | None = None) -> int:
             host_auth = {"success": True, "result": "already-configured", "precheck": host_ssh_precheck}
 
         emit_progress(action="add", phase="probe", message="probing host prerequisites", machine=alias)
+        use_host_sudo = target.user != "root" and password.value is not None
+        if use_host_sudo:
+            emit_progress(
+                action="add",
+                phase="probe",
+                message="probing host prerequisites with required sudo",
+                machine=alias,
+            )
         probe = probe_host(
             target,
             image=image,
             machine_type=requested_machine_type or existing_machine_type_hint,
+            sudo_password=password.value if use_host_sudo else None,
         )
         if probe.get("status") == "blocked":
             print_json(probe)
@@ -239,7 +248,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     "blocked",
                     success=False,
                     action="detect-machine-type",
-                    message="host probe succeeded but machine type could not be inferred; rerun with --machine-type A2|A3|310P",
+                    message="host probe succeeded but machine type could not be inferred; rerun with --machine-type A2|A3|A5|310P",
                     probe=probe,
                 )
             )
@@ -271,13 +280,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             soc=soc,
             public_key_file=args.public_key_file,
             replace_container_on_image_change=bool(args.image),
+            sudo_password=password.value if use_host_sudo else None,
         )
         if container.get("status") in {"needs_input", "needs_repair", "blocked"}:
             print_json(container)
             return 0
 
         actual_image = container.get("selected_image") or container.get("image") or image
-        bootstrap_method = "password-once" if host_ssh_precheck.get("ok") is False and password.value is not None else None
+        bootstrap_method = "password-once" if password.value is not None and (
+            use_host_sudo or host_ssh_precheck.get("ok") is False
+        ) else None
         container_machine_type = (
             machine_ops.normalize_machine_type(container.get("container_type"))
             if container.get("container_type")

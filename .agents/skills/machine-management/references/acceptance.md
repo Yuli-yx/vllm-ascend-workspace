@@ -65,7 +65,7 @@ These should not trigger `machine-management` unless machine readiness is the ob
 - the primary bootstrap path does not depend on `ssh-copy-id`
 - the skill checks Docker and required Ascend/NPU prerequisites before container creation
 - the host probe captures `machine_type` and `soc` from `npu-smi` / SoC output when possible and returns a clear override request when it cannot
-- the managed container uses host networking, required devices, required Ascend mounts, and `/vllm-workspace` as the workdir
+- the managed container uses host networking, required devices, required Ascend mounts, and `/vllm-workspace` as the workdir; A5 additionally exposes `/dev/ummu`, `/dev/uburma`, and `/dev/davinci0..7`
 - the skill configures a dedicated container `sshd` on a high port without brittle inline edits to `/etc/ssh/sshd_config`
 - the container bootstrap ensures `/run/sshd` exists
 - space-containing remote arguments such as SSH public keys and mesh peer keys survive the SSH hop intact
@@ -73,7 +73,8 @@ These should not trigger `machine-management` unless machine readiness is the ob
 - when a caller explicitly requests the prepared-image cache, the helper reports `prepared_image`, `used_prepared_image_cache`, and `created_prepared_image_cache` in the bootstrap payload
 - `machine_add.py` persists final alias, namespace, host identity, container name, image, and SSH port into inventory without the agent having to call `inventory.py put`
 - the recorded inventory image is the actual selected image after mirror resolution and pull / cache fallback
-- selector-based image resolution is hardware-aware: A2 keeps the base tag, A3 appends `-a3`, and 310P appends `-310p`
+- selector-based image resolution is hardware-aware: A2 keeps the base tag, A3 appends `-a3`, A5 appends `-a5`, and 310P appends `-310p`
+- A5 runtime metadata persists `ASCEND_LOCAL_COMM_RES='{"version":"1.3"}'` for P/D transfer
 - inventory persists `host.machine_type`, `host.soc`, and `container.machine_type`
 - `rc`, `main`, and `stable` remain first-class selectors, while `auto`, `*:latest`, and bare repositories without a tag are rejected as defaults
 - long-running bootstrap phases keep emitting attributable progress for image pull and package-install steps instead of going silent behind one global timeout

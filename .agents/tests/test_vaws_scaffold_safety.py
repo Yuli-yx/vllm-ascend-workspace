@@ -52,6 +52,11 @@ def load_script_module(name: str, path: Path):
     return module
 
 
+MACHINE_SCRIPT_DIR = ROOT / ".agents" / "skills" / "machine-management" / "scripts"
+machine_ops = load_script_module("_vaws_manage_machine_test", MACHINE_SCRIPT_DIR / "manage_machine.py")
+machine_inventory = load_script_module("_vaws_machine_inventory_test", MACHINE_SCRIPT_DIR / "inventory.py")
+
+
 class ValidatorTests(unittest.TestCase):
     def test_safe_id_rejects_path_shapes(self) -> None:
         for value in ("../x", "a/b", "/tmp/x", "..", "a b", ""):
@@ -72,6 +77,22 @@ class ValidatorTests(unittest.TestCase):
             with self.subTest(value=value):
                 with self.assertRaises(ValidationError):
                     parse_device_csv(value)
+
+
+class MachineTypeTests(unittest.TestCase):
+    def test_a5_machine_type_and_extended_image_are_recognized(self) -> None:
+        self.assertEqual(machine_ops.normalize_machine_type("a5"), "A5")
+        self.assertEqual(machine_inventory.normalize_machine_type("A5"), "A5")
+        image = "quay.io/ascend/vllm-ascend:dev-26.1.0.day20260811-A5-py311-Ubuntu24.04-lts-aarch64"
+        self.assertEqual(machine_ops.infer_machine_type_from_image(image), "A5")
+        self.assertEqual(machine_ops.validate_explicit_image_for_machine(image, "A5"), image)
+
+    def test_a5_bootstrap_contains_required_pd_devices_and_env(self) -> None:
+        script = machine_ops.render_bootstrap_host_script()
+        self.assertIn("--device=/dev/ummu", script)
+        self.assertIn("--device=/dev/uburma", script)
+        self.assertIn("/dev/davinci${device_id}", script)
+        self.assertIn("ASCEND_LOCAL_COMM_RES", script)
 
 
 class SessionIdTests(unittest.TestCase):

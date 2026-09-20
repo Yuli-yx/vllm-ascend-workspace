@@ -34,7 +34,14 @@ python3 .agents/skills/machine-management/scripts/machine_add.py \
   --image rc
 ```
 
-The wrapper will detect A2 / A3 / 310P from `npu-smi` when possible and append `-a3` or `-310p` automatically for selector-based images.
+The wrapper will detect A2 / A3 / A5 / 310P from `npu-smi` when possible and append `-a3`, `-a5`, or `-310p` automatically for selector-based images. For extended A5 tags, pass the full image reference explicitly.
+
+```bash
+python3 .agents/skills/machine-management/scripts/machine_add.py \
+  --host 10.0.0.5 \
+  --machine-type A5 \
+  --image quay.io/ascend/vllm-ascend:dev-26.1.0.day20260811-A5-py311-Ubuntu24.04-lts-aarch64
+```
 
 If `npu-smi` cannot identify the hardware cleanly, pass an explicit override:
 

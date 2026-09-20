@@ -481,6 +481,7 @@ def probe_host(
     machine_type: str | None = None,
     port_range: str = machine_ops.DEFAULT_PORT_RANGE,
     managed_prefix: str = "vaws-",
+    sudo_password: str | None = None,
 ) -> dict[str, Any]:
     image_request = machine_ops.image_request_payload(image, machine_type=machine_type)
     result = machine_ops.run_remote_script(
@@ -489,6 +490,7 @@ def probe_host(
         args=[json.dumps(image_request, ensure_ascii=False), port_range, managed_prefix],
         batch_mode=True,
         timeout_seconds=machine_ops.DEFAULT_PROBE_TIMEOUT_SECONDS,
+        sudo_password=sudo_password,
     )
     try:
         payload = machine_ops.assert_remote_success(result)
@@ -521,6 +523,7 @@ def bootstrap_container(
     public_key_file: str | None = None,
     replace_container_on_image_change: bool = False,
     use_prepared_image_cache: bool = False,
+    sudo_password: str | None = None,
 ) -> dict[str, Any]:
     key_path, private_key, public_key, needs_input = ensure_local_public_key(public_key_file)
     if needs_input is not None:
@@ -545,6 +548,7 @@ def bootstrap_container(
         ],
         batch_mode=True,
         timeout_seconds=machine_ops.DEFAULT_BOOTSTRAP_TIMEOUT_SECONDS,
+        sudo_password=sudo_password,
     )
     try:
         payload = machine_ops.assert_remote_success(result)

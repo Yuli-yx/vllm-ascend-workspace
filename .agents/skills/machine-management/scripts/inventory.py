@@ -36,7 +36,7 @@ SCHEMA_VERSION = 1
 STATE_LOCK_SUFFIX = ".lock"
 DEFAULT_LOCK_TIMEOUT_SECONDS = 15.0
 DEFAULT_LOCK_POLL_SECONDS = 0.05
-MACHINE_TYPE_CHOICES = ("A2", "A3", "310P")
+MACHINE_TYPE_CHOICES = ("A2", "A3", "A5", "310P")
 
 
 class InventoryError(RuntimeError):
@@ -489,7 +489,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--container-machine-type",
         "--container-type",
         dest="container_machine_type",
-        help="container hardware type metadata, for example A2, A3, or 310P",
+        help="container hardware type metadata, for example A2, A3, A5, or 310P",
     )
     put_cmd.add_argument(
         "--bootstrap-method",
@@ -541,7 +541,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--container-machine-type",
         "--container-type",
         dest="container_machine_type",
-        help="container hardware type metadata, for example A2, A3, or 310P",
+        help="container hardware type metadata, for example A2, A3, A5, or 310P",
     )
     upsert_cmd.add_argument(
         "--bootstrap-method",
