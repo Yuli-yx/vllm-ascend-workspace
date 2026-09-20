@@ -85,6 +85,7 @@ Agent 会自动检测你的环境、安装所需工具、配置 Git 远程仓库
 .
 ├── vllm/                  # vLLM 上游（Git 子模块）
 ├── vllm-ascend/           # vLLM Ascend 插件（Git 子模块）
+├── .remote-dev/           # 通用远端读写、执行、任务和 artifact 基础设施
 ├── .agents/
 │   ├── skills/
 │   │   ├── repo-init/             # 工作区初始化技能
@@ -99,18 +100,24 @@ Agent 会自动检测你的环境、安装所需工具、配置 Git 远程仓库
 │   │   ├── ascend-profiling-collection/ # torch profiler 采集技能
 │   │   └── ascend-profiling-analysis/ # profiling 分析报告技能
 │   ├── lib/               # 共享本地状态库
-│   └── scripts/           # 共享辅助脚本
+│   ├── scripts/           # 共享辅助脚本
+│   └── tests/             # skill 和共享基础设施回归测试
+├── .claude/               # Claude Code 薄适配层
 ├── .cursor/rules/         # Cursor IDE 专用规则
-├── .trae/                 # TRAE IDE 专用规则与技能
+├── .trae/                 # TRAE 薄适配层
+├── docs/                  # 仓库级设计与维护文档
 ├── AGENTS.md              # 跨工具 Agent 指令（AI Agent 读这个）
 ├── CLAUDE.md              # Claude Code 指令入口
 └── README.md              # 你正在看的这个文件
 ```
 
+本地运行状态、实验和问题单材料不属于仓库源码：`.vaws-local/`、`.remote-dev/state/`、`.worktrees/`、`artifacts/` 和 `experiments/` 均保持未跟踪。实验中确有复用价值的逻辑，应参数化后迁入 `.agents/skills/`、`.agents/lib/` 或 `.remote-dev/`，而不是直接提交整份实验目录。详细边界见 [仓库目录与提交策略](docs/repository-layout.md)。
+
 ## 设计原则
 
 - **不强制任何流程** — 所有技能都可选，开发者自由选择使用哪些部分。
 - **本地状态不入库** — 用户特定的远程仓库、认证信息、机器配置等只存在于本地未跟踪的 `.vaws-local/` 目录中。
+- **实验与能力分离** — 问题单、日志和运行结果留在忽略目录；只有清理、参数化并补齐验证后的通用能力进入源码目录。
 - **并行任务隔离** — 远端并行执行优先使用 session：每个任务有独立本地 worktree、远端容器、状态目录和资源 lease。
 - **远端操作结构化** — Agent 面向远端容器优先使用 remote toolbox，产出 JSON、可观测日志、可恢复 artifact manifest 和可清理状态。
 - **子模块指向社区** — `.gitmodules` 始终指向 `vllm-project` 的官方仓库，个人 Fork 是本地运行时配置。

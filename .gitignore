@@ -10,6 +10,8 @@ __pycache__/
 venv/
 .env
 .env.*
+!.env.example
+!.env.*.example
 *.log
 *.out
 docs/superpowers/
@@ -23,8 +25,17 @@ docs/superpowers/
 .remote-dev/endpoints.local.json
 .machine-inventory.json
 .worktrees/
+.uv-cache-agent/
 
 # Cursor IDE — ignore all except rules and skills (those are tracked / shared)
 .cursor/*
 !.cursor/rules/
 !.cursor/skills/
+
+# Local investigations and collected runtime evidence. Reusable logic belongs
+# in .agents/skills/, .agents/lib/, or .remote-dev/ instead.
+artifacts/
+experiments/
+
+# Temporary review workspaces created by local analysis tooling.
+.pd-dfx-golden-review/

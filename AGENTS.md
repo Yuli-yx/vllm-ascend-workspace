@@ -77,6 +77,15 @@ for domain workflows.
 - For parallel managed remote work, create or reuse a `session-management` session and pass `--session-id` through parity, serving, benchmark, and profiling commands. Legacy `--machine` flows remain available for explicitly single-tenant work.
 - This repo targets Huawei Ascend NPU. Local machines (Mac/PC) cannot run `torch`/`torch_npu`-dependent code. Do not attempt local test execution — go straight to the remote container.
 
+## Repository content boundaries
+
+- Put reusable agent workflows in `.agents/skills/<skill>/`, shared Python code in `.agents/lib/`, and reusable remote primitives in `.remote-dev/`.
+- Keep `.agents/skills/` as the canonical skill source. Tool-specific files under `.claude/`, `.cursor/`, and `.trae/` should stay thin and route back to the canonical package unless that tool requires a real adapter.
+- Do not commit local experiments, issue investigations, collected logs, benchmark outputs, runtime snapshots, archives, packet captures, or handoff bundles. Keep them under ignored `experiments/` or `artifacts/` directories.
+- If an experiment produces reusable logic, extract only the stable, parameterized part into the appropriate skill or library and add documentation and regression coverage there. Do not promote machine IPs, credentials, user paths, fixed device assignments, or case-specific patches.
+- Keep examples safe and portable: commit `*.example` templates, but keep populated environment files and endpoint inventories local.
+- See `docs/repository-layout.md` for the ownership and commit policy of each top-level area.
+
 ## Maintenance
 
 When changing a skill, update the whole package together: `SKILL.md`, `scripts/`, `references/`, `agents/`, and other supporting files as applicable. When the change affects shared state, also update `.agents/scripts/workspace_profile.py`, `.agents/lib/vaws_local_state.py`, `.agents/lib/vaws_session_id.py`, `.agents/lib/vaws_session_state.py`, and `.agents/lib/vaws_remote_toolbox.py` as applicable.

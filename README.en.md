@@ -84,6 +84,7 @@ When talking to an Agent:
 .
 ├── vllm/                  # Upstream vLLM (Git submodule)
 ├── vllm-ascend/           # vLLM Ascend Plugin (Git submodule)
+├── .remote-dev/           # Reusable remote read/write/exec/job/artifact substrate
 ├── .agents/
 │   ├── skills/
 │   │   ├── repo-init/         # Workspace initialization skill
@@ -98,18 +99,24 @@ When talking to an Agent:
 │   │   ├── ascend-profiling-collection/ # Torch profiler collection skill
 │   │   └── ascend-profiling-analysis/ # Profiling analysis/report skill
 │   ├── lib/               # Shared local-state library
-│   └── scripts/           # Shared helper scripts
+│   ├── scripts/           # Shared helper scripts
+│   └── tests/             # Skill and shared-infrastructure regression tests
+├── .claude/               # Thin Claude Code adapters
 ├── .cursor/rules/         # Cursor IDE specific rules
-├── .trae/                 # TRAE IDE specific rules and skills
+├── .trae/                 # Thin TRAE adapters
+├── docs/                  # Repository-level design and maintenance docs
 ├── AGENTS.md              # Cross-tool Agent instructions (Agents read this)
 ├── CLAUDE.md              # Claude Code instruction entry point
 └── README.md              # Chinese README (default)
 ```
 
+Local runtime state, experiments, and issue evidence are not repository source: `.vaws-local/`, `.remote-dev/state/`, `.worktrees/`, `artifacts/`, and `experiments/` remain untracked. Reusable logic discovered during an investigation should be parameterized and moved into `.agents/skills/`, `.agents/lib/`, or `.remote-dev/` instead of committing the experiment directory. See [Repository layout and commit policy](docs/repository-layout.md) for details.
+
 ## Design principles
 
 - **Nothing is mandatory** — All skills are optional. Developers choose what to use.
 - **Local state stays untracked** — User-specific remotes, auth, and machine config live only in the untracked `.vaws-local/` directory.
+- **Experiments stay separate from capabilities** — Issue evidence and runtime output stay ignored; only cleaned, parameterized, and validated reusable code belongs in source directories.
 - **Parallel tasks stay isolated** — Remote parallel work should use sessions: each task gets its own local worktree, remote container, state namespace, and resource leases.
 - **Remote operations are structured** — Agents should prefer the remote toolbox for JSON results, observable logs, resumable artifact manifests, and cleanup-capable state.
 - **Submodules point to community** — `.gitmodules` always targets `vllm-project` official repos. Personal forks are a local runtime concern.
