@@ -928,7 +928,9 @@ cat > {shlex.quote(str(PurePosixPath(remote_dir) / "run.sh"))} <<'VAWS_RUN'
 {runner}
 VAWS_RUN
 chmod +x {shlex.quote(str(PurePosixPath(remote_dir) / "run.sh"))}
-nohup bash {shlex.quote(str(PurePosixPath(remote_dir) / "run.sh"))} >/dev/null 2>&1 </dev/null &
+# Give every remote job its own session/process group so stopping a vLLM
+# launcher also stops multiprocessing workers that outlive their parent.
+nohup setsid bash {shlex.quote(str(PurePosixPath(remote_dir) / "run.sh"))} >/dev/null 2>&1 </dev/null &
 pid=$!
 echo "$pid" > {shlex.quote(str(PurePosixPath(remote_dir) / "pid"))}
 printf '{{"pid":%s}}\\n' "$pid"
@@ -1061,7 +1063,9 @@ set +e
 pid_path={shlex.quote(str(remote_dir / "pid"))}
 if [ ! -f "$pid_path" ]; then printf '%s\\n' '{{"status":"failed","error":"pid file missing"}}'; exit 0; fi
 pid=$(cat "$pid_path")
-kill {sig} "$pid" 2>/dev/null || true
+# New jobs are session leaders.  Signal their whole process group first;
+# retain the direct-PID fallback for records created before that change.
+kill {sig} -- "-$pid" 2>/dev/null || kill {sig} "$pid" 2>/dev/null || true
 sleep 1
 alive=0
 kill -0 "$pid" 2>/dev/null && alive=1
