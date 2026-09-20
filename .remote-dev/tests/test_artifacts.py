@@ -69,7 +69,8 @@ class ArtifactTests(unittest.TestCase):
         try:
             with tempfile.TemporaryDirectory() as tmp:
                 local = Path(tmp) / "artifact.txt"
-                local.write_text("payload\n", encoding="utf-8")
+                # Exact-byte transport assertion must not use Windows newline translation.
+                local.write_bytes(b"payload\n")
                 expected = artifact_ops._sha256_file(local)
 
                 def fake_run_bytes(_endpoint, command, *, stdin=None, timeout_ms=None):

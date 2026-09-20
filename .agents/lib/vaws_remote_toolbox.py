@@ -53,6 +53,11 @@ from vaws_validate import (  # noqa: E402
     require_safe_id,
 )
 
+_REMOTE_DEV_DIR = ROOT / ".remote-dev"
+if str(_REMOTE_DEV_DIR) not in sys.path:
+    sys.path.insert(0, str(_REMOTE_DEV_DIR))
+from core.shell_text import shell_text_error  # noqa: E402
+
 
 PROGRESS_SENTINEL = "__VAWS_REMOTE_TOOLBOX_PROGRESS__="
 STATE_DIR = ROOT / ".vaws-local" / "remote-toolbox"
@@ -400,7 +405,19 @@ def ssh_exec_raw(
     check: bool = False,
 ) -> subprocess.CompletedProcess[str]:
     cmd = [*_ssh_base_cmd(endpoint), "bash", "-c", shlex.quote(script)]
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, check=False)
+    # Remote containers consistently emit UTF-8, while Windows otherwise uses
+    # the active ANSI code page (for example GBK) for ``text=True``.  A single
+    # non-GBK byte in a model log would then kill subprocess' reader thread and
+    # silently discard the output we need for diagnosis.
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=timeout,
+        check=False,
+    )
     if check and result.returncode != 0:
         raise RemoteToolboxError(
             f"remote command failed (rc={result.returncode}): {tail_text(result.stderr, 2000)}"
@@ -1393,6 +1410,17 @@ def artifact_push(
     started_at = now_iso()
     start = time.monotonic()
     manifest = _local_manifest(local_path)
+    # Validate the whole batch before creating even the first remote directory.
+    for file_info in manifest["files"]:
+        error = shell_text_error(Path(file_info["path"]), _remote_join(remote_path, file_info["relpath"]))
+        if error:
+            return {
+                "status": "blocked",
+                "error_code": "shell_text_invalid",
+                "error": error,
+                "artifacts": {"manifest": manifest, "pushed": []},
+                "logs": {},
+            }
     pushed: list[dict[str, Any]] = []
     for file_info in manifest["files"]:
         relpath = file_info["relpath"]

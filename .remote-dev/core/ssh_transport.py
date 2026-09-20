@@ -40,15 +40,14 @@ def run_script(endpoint: Endpoint, script: str, *, timeout_ms: int | None = None
     try:
         proc = subprocess.run(
             [*ssh_base_cmd(endpoint), "bash", "-s"],
-            input=script,
+            # Binary stdin preserves LF on Windows; text mode translates it to
+            # CRLF before SSH, which makes an otherwise valid Bash script fail.
+            input=script.encode("utf-8"),
             capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
             timeout=timeout,
             check=False,
         )
-        return RemoteCompleted(proc.returncode, proc.stdout or "", proc.stderr or "")
+        return RemoteCompleted(proc.returncode, _decode_stream(proc.stdout), _decode_stream(proc.stderr))
     except subprocess.TimeoutExpired as exc:
         stdout = _decode_stream(exc.stdout)
         stderr = _decode_stream(exc.stderr)

@@ -12,6 +12,7 @@ from .endpoint import Endpoint
 from .errors import PathPolicyError
 from .path_policy import join_under_root
 from .result import make_result, utc_now_iso
+from .shell_text import shell_text_error
 from .ssh_transport import run_bytes, run_remote_python
 from .state_store import atomic_write_json, ensure_endpoint_state
 
@@ -314,6 +315,18 @@ def remote_artifact_push(
         )
         return {"text": result["summary"] + "\n" + str(exc) + "\n", "result": result}
 
+    # Validate every shell file before any remote mkdir/upload in this batch.
+    for item in manifest["files"]:
+        destination = remote_base if item["relpath"] == "." else str(PurePosixPath(remote_base) / item["relpath"])
+        error = shell_text_error(Path(item["path"]), destination)
+        if error:
+            result = make_result(
+                tool="remote.artifact_push", target=endpoint.to_result_target(),
+                outcome="blocked", status="shell_text_invalid", summary=error,
+                started_at=started, duration_ms=_duration_ms(start),
+                artifacts=[{"manifest": manifest, "pushed": []}], extra={"error": error},
+            )
+            return {"text": error + "\n", "result": result}
     pushed: list[dict[str, Any]] = []
     for item in manifest["files"]:
         relpath = str(item["relpath"])
