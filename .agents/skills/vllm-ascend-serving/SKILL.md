@@ -41,6 +41,7 @@ This skill takes structured parameters, handles all SSH escaping and remote exec
 - All remote execution goes through the scripts — never construct raw SSH commands for serving.
 - Keep local runtime state under `.vaws-local/serving/` for legacy mode and `.vaws-local/sessions/<id>/` for session mode.
 - Progress on `stderr` as `__VAWS_SERVING_PROGRESS__=<json>`, final result on `stdout` as JSON.
+- On a shared host, make long-running NPU service processes identifiable by their owner in the host's `npu-smi info` and `ps` views. Read [process ownership](references/process-ownership.md) before launch or when resolving an occupied card. A container name alone is insufficient.
 
 ## Cross-platform launcher rule
 
