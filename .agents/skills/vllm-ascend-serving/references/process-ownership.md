@@ -40,10 +40,25 @@ name is context for the local operator only.
    wrapper; `--extra-env` quotes values literally and does not expand
    `${PYTHONPATH}`. Check that this directory exists in the target container
    before launch and that `setproctitle` imports there.
-3. In manually managed shared environments, also identify the owner in the
-   container name and record the launch-script location in the local service
-   ledger. These help colleagues find context but do not replace process
-   naming.
+3. In manually managed shared environments, include the owner ID in the
+   container name. Keep the launch script and logs below
+   `/mnt/share/<owner-id>/` if that shared filesystem is mounted and writable;
+   otherwise use the machine-local `/home/<owner-id>/`. Append one row to the
+   service ledger with the owner ID, machine IP (or stable hostname), role,
+   container, start time, launch-script path, and log location. On shared
+   storage, each log set **must** identify its source machine and role (for
+   example, `prefill` or `decode`) in the path or adjacent metadata so logs
+   from different hosts cannot be confused. Use the same labeling on local
+   storage when possible. A layout such as
+   `<base>/<machine-id>/<role>/<run-id>/start.sh` and `stdout.log` keeps the
+   script and logs together. Container and ledger labels help colleagues find
+   context but do not replace process naming.
+
+The managed `serve_start.py` launcher currently generates `_serve.sh` and logs
+under `<workdir>/.vaws-runtime/serving/<timestamp>/`. Record those actual paths
+in the ledger. An owner directory or ledger entry does not relocate the
+managed launcher's files; change its runtime path deliberately before claiming
+the owner-directory layout is in use.
 
 Do not use `exec -a` to rename the `vllm` command: its shebang interpreter
 replaces that `argv[0]`. An earlier Ascend environment also reproduced native
