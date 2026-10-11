@@ -8,9 +8,9 @@
 
 | 组件 | 精确提交与交付状态 | 实际证据 |
 | --- | --- | --- |
-| 知识核心 | [PR #61](https://github.com/mindie-agent/knowledge/pull/61)，候选 `7c99fbb` 已合入 `c23e38b` | Linux/macOS 878 passed / 9 skipped；Windows 857 passed / 30 skipped；package CI 成功。合入提交的源码、依赖、测试和工作流与已验证候选相同 |
+| 知识核心 | 故障修复 [PR #62](https://github.com/mindie-agent/knowledge/pull/62)、编排重构 [PR #63](https://github.com/mindie-agent/knowledge/pull/63) 后，退休连接发现修复 [PR #64](https://github.com/mindie-agent/knowledge/pull/64)，候选 `38d96a1` 合入 `83778dd` | 最终 Linux/macOS 903 passed / 9 skipped；Windows 882 passed / 30 skipped；package CI 成功。合入树与候选相同，保留候选为主线祖先；本机实际 runtime pin 为该已验证候选 |
 | 公开内容合同 | [PR #38](https://github.com/mindie-agent/knowledge-vllm-ascend/pull/38)，候选 `7510944` 已合入 `38ab4b9` | 新主线 trusted-base workflow 实际使用知识核心 `7c99fbb`，校验 21 个任务包、1 个反馈、249215 bytes，`publication-head` 成功；已有任务正文未改动 |
-| Codex 接入 | [PR #19](https://github.com/mindie-agent/mindie-agent-codex/pull/19)，最终候选 `ead0f16` 已合入 `078fc0e` | 最新候选 CI：Linux 运行 395 tests，OK / 13 skips；Windows 运行 395 tests，OK / 20 skips，含实际 CMD 与 PowerShell Hook 派发；产品 preflight 成功。合入提交树与已验证候选相同 |
+| Codex 接入 | 交付身份重构 [PR #24](https://github.com/mindie-agent/mindie-agent-codex/pull/24)、回执修正 [PR #25](https://github.com/mindie-agent/mindie-agent-codex/pull/25) 后，[PR #26](https://github.com/mindie-agent/mindie-agent-codex/pull/26) 交付最终核心，候选 `e0c6d33` 合入 `1d4f705` | 最终 Linux/Windows 各运行 406 tests，分别 393/386 passed、13/20 skipped，包含正常独立安装的可信旧审核器互操作及产品 preflight。合入提交树与候选相同；本机已实际选中，并通过无预热的首次原生读取 |
 
 ## 2026-10-09 原生验收补充
 
@@ -50,4 +50,6 @@
 
 [生命周期收敛与重构范围](knowledge-review-2026-10-11/lifecycle-readiness.md)记录当前知识优先级、已复现的授权转换与回执风险、局部修复候选和真实后台复验，以及后续重构和跨系统验收的依赖顺序。remote-dev 沿用已有成果，只关注版本组合及更新交接。
 
-当前 Codex 候选要求公共 trusted validator revision 等于知识 runtime revision；本地生命周期修复不能只修改依赖 pin 就视为交付。运行时、公共格式和审核代码的兼容职责需在发布前澄清，现有可信校验未放宽。本机插件未切换，维护者修正/撤下、完全无人介入的正常合入、实际业务复用收益和真实正式版本间升级仍是独立未完成项。
+生命周期编排和交付身份重构见[最终交付记录](knowledge-review-2026-10-11/refactor-delivery.md)及其精确证据。每个操作独立管理取消与恢复，进度事务和发布回执各有职责；runtime 代码身份与产品选择的公开格式、可信审核器代码身份已分离，并保留精确 pin、声明摘要、交付回执及真实互操作检查。本机通过既有更新器切换，已有材料与业务回执保留；原生读取已回读，本次没有重跑模型或 Bot 投稿。
+
+维护者修正/撤下、完全无人介入的正常合入、实际业务复用收益和真实正式版本间升级仍是独立未完成项。当前加载定义、新任务原生 Stop、实际模型与 Bot 的证据继续按各自版本报告，不能由安装或 CI 推定。
