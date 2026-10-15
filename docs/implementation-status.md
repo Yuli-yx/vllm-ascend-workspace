@@ -1,10 +1,21 @@
 # 统一实施进度
 
-更新于 2026-10-11。设计以[架构](architecture.md)、[Harness 生命周期](harness-boundary-and-lifecycle.md)及[九条原则](design-principles.md)为准。旧版本实施与实机记录保留在 [Git 历史](https://github.com/mindie-agent/mindie-agent/blob/d3627ed962c3ccba3c26020fa4dbf0032f963903/docs/implementation-status.md)，其证据不自动覆盖新接口。
+更新于 2026-10-15。设计以[架构](architecture.md)、[Harness 生命周期](harness-boundary-and-lifecycle.md)及[九条原则](design-principles.md)为准。旧版本实施与实机记录保留在 [Git 历史](https://github.com/mindie-agent/mindie-agent/blob/d3627ed962c3ccba3c26020fa4dbf0032f963903/docs/implementation-status.md)，其证据不自动覆盖新接口。
 
 ## 当前交付
 
-当前目标是 Codex 的完整知识闭环和运行时交付。安装沿用已有贡献选择与项目范围，合格原生任务自动关联；查询、读取和反馈按需使用。Kimi 与 Claude Code 仍需单独移植和原生验收，不能只更新共享依赖就视为完成。
+当前目标为普通内测 Release `0.0.1`，同时支持 Codex / Claude Code 与
+macOS / 原生 Windows。版本、最终依赖、当前四组合矩阵和发布阻塞统一
+记录在 [Release 准备](releases/0.0.1.md)；问题的系统性归因记录在
+[根因分析](releases/0.0.1-root-cause-review.md)。目前未发布，Windows
+核心问题仍在调查，不能只更新共享依赖就视为完成。benchmark 独立推进。
+
+安装沿用已有贡献选择与项目范围，合格原生任务自动关联；查询、读取和
+反馈按需使用。Kimi 不在首发范围。
+
+## 2026-10-11 已交付基线
+
+下表为此次 Release 准备之前的已合入基线，不是 0.0.1 最终候选。
 
 | 组件 | 精确提交与交付状态 | 实际证据 |
 | --- | --- | --- |
