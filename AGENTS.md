@@ -16,6 +16,18 @@ Keep implementation status distinct from the target design and real acceptance e
 Do not add old VAWS aliases or an alternative legacy installation path.
 Do not alter the user's unrelated skills, plugins or MCP configuration.
 
+## Paired component and plugin releases
+
+Before publishing a plugin Release, follow the
+[paired-release checklist](docs/release-compatibility-and-update.md#组件与插件配套发布).
+Every first-party runtime dependency in its final lock must have a published,
+non-draft, non-prerelease component Release whose tag resolves to that exact
+locked commit. Verify package versions and downloaded artifacts; a merge, green
+CI or a fixed Git revision alone is not a component Release. Publish dependencies
+before consumers, reuse unchanged releases, and keep component version histories
+independent. Record the complete mapping and actual evidence in the product
+release record. Content-only knowledge updates follow their publication contract.
+
 ## Mandatory design-principles review before PR submission
 
 All MindIE Agent development tasks MUST read the current [design principles](docs/design-principles.md) and review the final diff and affected behavior against all nine principles before creating any PR, including a draft. This covers code, configuration, dependencies, CI and project documentation. Review subsequent PR changes against the affected principles again.
