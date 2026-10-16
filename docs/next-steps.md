@@ -13,9 +13,11 @@ separately identifies installed native evidence, later source deltas, actual
 merged commits and each repository's publication state. This page does not
 infer publication of the architecture repository from an adapter Release.
 
-1. Maintain repository-specific publication consistency with each
-   exact merged source: reviewed notes, ordinary Release flags, immutable tag
-   and downloaded asset hashes. Follow the release record rather than treating
+1. Follow the [paired-release checklist](release-compatibility-and-update.md#组件与插件配套发布):
+   publish first-party runtime dependencies before plugins, preserve independent
+   component versions, and match every release tag to the exact commit in the
+   plugin lock. Reuse unchanged releases. Check reviewed notes, ordinary Release
+   flags and downloaded package hashes. Follow the release record rather than treating
    historical pending rows as new work. Preserve original failures and the
    corrected-fixture boundaries in the
    [root-cause review](releases/0.0.1-root-cause-review.md).
