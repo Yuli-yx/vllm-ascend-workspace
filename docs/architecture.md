@@ -1,8 +1,11 @@
 # MindIE Agent architecture
 
-Current design, revised 2026-10-16. The [prerelease runtime contract](prerelease-runtime-design-2026-10-05.md) defines automatic task association, caller-owned execution limits and bounded growth. The [knowledge delivery and consumption contract](systematic-knowledge-design-2026-10-04.md) specifies the current package, block-reading and citation semantics. This replaces the earlier implementation plan from Issue #195; history remains in Git. The [nine inherited VAWS principles](design-principles.md) govern every adapter. [Implementation status](implementation-status.md) records evidence separately; the simplifications below are requirements, not claims of completed acceptance.
+Current design, revised 2026-10-16. The [runtime contract](prerelease-runtime-design-2026-10-05.md) defines automatic task association, caller-owned execution limits and bounded growth. The [knowledge delivery and consumption contract](systematic-knowledge-design-2026-10-04.md) specifies the current package, block-reading and citation semantics. This replaces the earlier implementation plan from Issue #195; history remains in Git. The [nine inherited VAWS principles](design-principles.md) govern every adapter. [Implementation status](implementation-status.md) and the [0.0.1 release record](releases/0.0.1.md) distinguish architecture, implementation, native evidence and each repository's publication state.
 
-The complete-material implementation and its earlier authorized synthetic native acceptance are recorded in [implementation status](implementation-status.md). Those results retain their exact revision boundaries and do not certify the new contracts or prerelease changes described here.
+The complete-material implementation and its authorized native acceptance retain
+their exact revision boundaries. The release record owns the six-environment
+evidence, later scoped source deltas and accepted known limitation; this
+architecture does not relabel earlier installed results as a new installation.
 
 ## Product and normal use
 
@@ -29,7 +32,7 @@ The current domain is vLLM / vLLM-Ascend. A task uses its selected domain's know
 
 Adapters reuse the same knowledge and remote-dev implementations. Native identity and transcript formats stay in adapters. A shared runtime must not import a host-specific lease table or guess a task from the latest session or working directory. Adapter separation does not justify a second knowledge database or publishing protocol.
 
-The first ordinary internal Release, [0.0.1](releases/0.0.1.md), targets both Codex and Claude Code on macOS, native Windows and Windows WSL. These are six separate acceptance environments. Their candidate ports and exact shared pins are recorded in the release document; neither dependency alignment nor a macOS result establishes Windows or WSL acceptance. Kimi remains outside this first-release scope. Coordinator and npu-top are optional tools with their own execution and observation contracts; installing a product plugin does not implicitly start them.
+The first ordinary internal Release, [0.0.1](releases/0.0.1.md), covers Codex and Claude Code on macOS, native Windows and Windows WSL. These are six separate acceptance environments. Their installed revisions, scoped deltas, exact shared pins and actual publication states are recorded in the release document; neither dependency alignment nor a macOS result establishes Windows or WSL acceptance. Kimi remains outside this first-release scope. Coordinator and npu-top are optional tools with their own execution and observation contracts; installing a product plugin does not implicitly start them.
 
 Grok Bot means the installed bot application, not Grok CLI. There is no routine-wide one-merge quota, arbitrary candidate count or mandatory twenty-minute review window.
 
@@ -220,7 +223,21 @@ Earlier Windows PowerShell, WSL and macOS evidence remains scoped to its recorde
 
 Development checks, native installation, real Hook delivery, a real public PR/Bot merge, and usefulness in a new task are recorded separately. A registry success, connected MCP panel or old revision's evidence cannot stand for the final implementation.
 
-Current work resolves first-release failures across Codex, Claude Code and their shared runtime. The [release root-cause review](releases/0.0.1-root-cause-review.md) distinguishes proven causes, candidate fixes and native acceptance; core failures cannot be relabeled as accepted limitations to shorten preparation. Component benefit benchmarks remain a separate track. Kimi, old business Skills, automatic Skill extraction and further domain/Harness expansion remain deferred. Cross-domain work may reuse native tasks and existing tools when needed; there is no compulsory domain router or new conversation framework.
+The first-release evidence and publication identities are recorded in
+the [0.0.1 release record](releases/0.0.1.md). The
+[root-cause review](releases/0.0.1-root-cause-review.md) retains proven causes,
+failed hypotheses, corrections and the actual native revision boundaries.
+Codex child interruption may leave a pending helper/SSH operation or an
+already-started remote command running. This specific limitation is accepted
+for 0.0.1 without compensation; it is not a claim of repair, wider Harness
+support or successful cancellation of durable remote jobs. Follow-up tracks
+the upstream fix without a private Harness, watcher or arbitrary business
+deadline. New component failures do not inherit that exception.
+
+Component benefit benchmarks remain a separate track. Kimi, old business
+Skills, automatic Skill extraction and further domain/Harness expansion remain
+deferred. Cross-domain work may reuse native tasks and existing tools when
+needed; there is no compulsory domain router or new conversation framework.
 
 The old VAWS bootstrap, source/worktree manager and legacy installation path remain retired. This permission to rewrite product internals does not authorize deletion of unrelated user repositories, private material or running resources.
 
