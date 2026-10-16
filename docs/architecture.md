@@ -1,8 +1,11 @@
 # MindIE Agent architecture
 
-Current design, revised 2026-10-09. The [prerelease runtime contract](prerelease-runtime-design-2026-10-05.md) defines automatic task association, caller-owned execution limits and bounded growth. The [knowledge delivery and consumption contract](systematic-knowledge-design-2026-10-04.md) specifies the current Codex package, block-reading and citation semantics. This replaces the earlier implementation plan from Issue #195; history remains in Git. The [nine inherited VAWS principles](design-principles.md) govern every adapter. [Implementation status](implementation-status.md) records evidence separately; the simplifications below are requirements, not claims of completed acceptance.
+Current design, revised 2026-10-16. The [runtime contract](prerelease-runtime-design-2026-10-05.md) defines automatic task association, caller-owned execution limits and bounded growth. The [knowledge delivery and consumption contract](systematic-knowledge-design-2026-10-04.md) specifies the current package, block-reading and citation semantics. This replaces the earlier implementation plan from Issue #195; history remains in Git. The [nine inherited VAWS principles](design-principles.md) govern every adapter. [Implementation status](implementation-status.md) and the [0.0.1 release record](releases/0.0.1.md) distinguish architecture, implementation, native evidence and each repository's publication state.
 
-The complete-material implementation and its earlier authorized synthetic native acceptance are recorded in [implementation status](implementation-status.md). Those results retain their exact revision boundaries and do not certify the new contracts or prerelease changes described here.
+The complete-material implementation and its authorized native acceptance retain
+their exact revision boundaries. The release record owns the six-environment
+evidence, later scoped source deltas and accepted known limitation; this
+architecture does not relabel earlier installed results as a new installation.
 
 ## Product and normal use
 
@@ -29,7 +32,7 @@ The current domain is vLLM / vLLM-Ascend. A task uses its selected domain's know
 
 Adapters reuse the same knowledge and remote-dev implementations. Native identity and transcript formats stay in adapters. A shared runtime must not import a host-specific lease table or guess a task from the latest session or working directory. Adapter separation does not justify a second knowledge database or publishing protocol.
 
-The current implementation target is Codex. Kimi and Claude Code still use earlier pinned combinations and require separate ports and native acceptance. Coordinator and npu-top are optional tools with their own execution and observation contracts; installing the Codex plugin does not implicitly start them.
+The first ordinary internal Release, [0.0.1](releases/0.0.1.md), covers Codex and Claude Code on macOS, native Windows and Windows WSL. These are six separate acceptance environments. Their installed revisions, scoped deltas, exact shared pins and actual publication states are recorded in the release document; neither dependency alignment nor a macOS result establishes Windows or WSL acceptance. Kimi remains outside this first-release scope. Coordinator and npu-top are optional tools with their own execution and observation contracts; installing a product plugin does not implicitly start them.
 
 Grok Bot means the installed bot application, not Grok CLI. There is no routine-wide one-merge quota, arbitrary candidate count or mandatory twenty-minute review window.
 
@@ -56,7 +59,7 @@ Missing configuration, explicit disable, scope mismatch and a component fault ar
 
 When enabled, only the verified native task and existing authorized project scope can contribute. Forks and new tasks have separate identities. Disable cancels unsent work; re-enable admits subsequent material, not an automatic replay of old history. Raw transcripts remain local and never become GitHub content.
 
-The Hook durably admits a notification and exits with neutral protocol output. It does not request another business-model turn or display MindIE operations instructions. Runtime failures reach the Agent through the next natural capability call, with bounded references rather than private content. Interpreter or script startup failures cannot enter that runtime channel; the wrapper reports one bounded stderr failure to the host, preserving unconfirmed completion without retry. Model work runs in the existing background owner. Healthy operations have no default total execution deadline; only caller-requested limits end business execution. Failed or uncertain model input is not automatically retried. Unknown publication results are reconciled against the original remote branch/PR before another write.
+The Hook durably admits a notification and exits with neutral protocol output. It does not request another business-model turn or display MindIE operations instructions. Required capture or startup failures produce a bounded native warning through the host's Hook output, including failures before the runtime diagnostic channel exists. A neutral Hook exit does not mean capture succeeded. Detailed runtime failures also remain available through subsequent natural capability calls, with bounded references rather than private content. Model work runs in the existing background owner. Healthy operations have no default total execution deadline; only caller-requested limits end business execution. Failed or uncertain model input is not automatically retried. Unknown publication results are reconciled against the original remote branch/PR before another write.
 
 Task length, accumulated experience body size and total corpus size are not admission limits. Long tasks use incremental reads, saved progress and bounded model input/output; the component must continue through all admitted material without truncating the remainder or requiring a new user task. Bound memory and concurrency at the operation boundary; process/connection health and cancellation govern liveness. Elapsed time or silence does not establish failure. Internal processing chunks and submission coalescing are implementation details, not user-managed batches or fixed experience counts.
 
@@ -77,8 +80,9 @@ Incremental indexing is required before public packaging. A failed index attempt
 preserves local material and reports the unfinished stage; it is not a completed
 publication. Returned model output survives local apply failures so recovery does
 not repeat the model call. Publication, synchronization and retrieval invoke no
-model. Codex supplies the current summary-worker protocol; Kimi and Claude Code
-require independent worker integration and acceptance.
+model. Codex and Claude Code each own their native model invocation and must
+independently pass the shared result/usage contract. Kimi integration remains
+deferred.
 
 Live Stop intake and explicit historical import share the same projection,
 redaction, incremental queue and package logic. History import requires an
@@ -153,19 +157,51 @@ cross-repository deployment states fail visibly and retain prior valid state.
 Runtime, content/Bot contract and adapter are published in that order; Git does not
 provide a transaction across repositories.
 
-The candidate's interpreter runs its own runtime validator. The running updater
-checks source identity and a bounded receipt protocol without importing its own
-version's private knowledge APIs. An update stages the complete adapter, Skills, Hooks and pinned runtime, verifies the selected native package and actually loaded resources, and atomically commits one generation. Every operation uses a coherent scripts/interpreter/configuration tuple.
+Each plugin Release declares supported Harness versions and directly used interfaces.
+After more than 24 hours since a successful check, natural use triggers one
+asynchronous compatibility check. Failed checks back off without changing the
+success time. An already prepared candidate can activate independently of the
+next check. Ordinary calls perform only a lightweight local due check.
 
-Actual in-flight work blocks switching. An idle authorized task or an old unknown PR receipt does not. The runtime's idle decision and admission freeze must be atomic. The original task must still control its existing remote job after an update.
+The native installer prepares the selected immutable Release, and uv builds its
+locked, noneditable runtime outside the active runtime and business-operation lock.
+The candidate's interpreter validates the complete scripts/interpreter/configuration
+binding. The adapter does not import a different installed version's private APIs
+or maintain another native package registry.
 
-The knowledge runtime owns generation retirement under its startup lock, keyed to the exact selected configuration. This also rejects an old wake helper that was spawned before the switch but has not started its service yet. The adapter uses this boundary instead of inferring safety from a temporarily missing endpoint or process lock. Rollback restores only the corresponding retired configuration; completed stop/install facts remain separate from later cleanup or restore faults.
+Each business operation holds the existing shared lock; an MCP connection or idle
+authorized task does not retain a lifetime lease. Switching takes the exclusive
+lock and verifies that the existing service has no admitted work before retiring
+its exact owner. A busy operation postpones switching. The 30-second control
+observation window does not terminate business work. Authenticated candidate
+readiness precedes publication of the one canonical installation binding.
+Stable entrypoints resolve that binding for subsequent calls, including calls
+from old native sessions. The original task retains control of its remote jobs.
 
-When switching requires stopping a live local knowledge service, the updater preserves that fact and restores service under the selected generation if valid explicit task authorization remains. Restoration binds the selected Harness profile and its existing model configuration; process readiness alone does not establish that later organization can use that model. A durable admitted Stop notification can request a bounded wake outside the Hook; it does not start a business turn or replay a missing event. Query and wake paths reconcile the actual endpoint and generation before starting one owned service. An interrupted handoff remains observable and may resume through these existing paths after rechecking authorization and process ownership; it must not require the user to discover a CLI command.
+Stop is a durable event, so it takes one complete binding snapshot and enters the
+existing capture queue without waiting for the switching lock. Current scope and
+revocation still apply. Service wake and query reconcile the exact configuration,
+authenticated endpoint and existing startup lock; a retired owner cannot be
+revived by a late helper. There is no successor chain or second capture queue.
+The selected Harness profile and model configuration remain explicit: process
+readiness alone does not prove that later indexing can use the model.
 
-Plugin and feed updates classify failures. Temporary connectivity, rate limits and interrupted IO back off through the existing scheduler, honoring server retry guidance; three such failures must not permanently exclude an otherwise valid commit. Invalid content or incompatible generations remain isolated while the last working version stays available. Attempts honor caller cancellation and actual failure evidence, with bounded memory and concurrency; these resource bounds do not impose a default execution deadline. A later background network attempt is not another model attempt. Status records the last success, fault category and next recovery time. Authentication or native trust failures request the one necessary external action; routine connectivity failures do not wake the user or business model. Stable management entrypoints dispatch to the selected generation rather than an outdated installer copy.
+Preparation, native installation, owner retirement, readiness and binding publication
+retain their actual outcomes. An unresolved native writer prevents a duplicate
+installation; a later local recording or cleanup failure cannot erase a completed
+effect. Before publication, a failed candidate leaves the prior binding selected,
+and any required restoration must verify exact ownership. Existing query and wake
+paths resume a valid selection without a user repair command or replay of uncertain
+business work. Invalid candidates remain failures, not successful updates.
 
-Keep necessary old entrypoints and rollback data while a host may still use them. Installed files, definitions loaded into a live task, and Hook trust are separate facts. A host-required trust review is never bypassed or silently granted by an updater.
+Plugin checks and knowledge-feed synchronization keep their separate existing
+interval/backoff controls; neither requires a dedicated code-update scheduler.
+Updates preserve saved contribution, disablement and reporting choices and add no
+confirmation, notification or manual reload. Installed files, definitions loaded
+into a live task and native trust remain separate facts; explicit revocation and
+native trust requirements are not bypassed. See
+[compatible silent updates](release-compatibility-and-update.md) and
+[native mechanism reuse](native-runtime-reuse.md).
 
 Native identity binding must use verified host evidence. Missing metadata can be bridged by an exact one-shot native tool event binding, never by guessing from content, timestamps or the latest task. A remote tool's job `session_id` alias is not a native task credential.
 
@@ -187,8 +223,28 @@ Earlier Windows PowerShell, WSL and macOS evidence remains scoped to its recorde
 
 Development checks, native installation, real Hook delivery, a real public PR/Bot merge, and usefulness in a new task are recorded separately. A registry success, connected MCP panel or old revision's evidence cannot stand for the final implementation.
 
-The current work prioritizes Codex and its upstream/downstream lifecycle and knowledge contracts. Kimi and Claude Code require separate later ports and native acceptance. Old business Skills, profiling analysis, automatic Skill extraction and further domain/Harness expansion remain deferred. Cross-domain work may reuse native tasks and existing tools when needed; there is no compulsory domain router or new conversation framework.
+The first-release evidence and publication identities are recorded in
+the [0.0.1 release record](releases/0.0.1.md). The
+[root-cause review](releases/0.0.1-root-cause-review.md) retains proven causes,
+failed hypotheses, corrections and the actual native revision boundaries.
+Codex child interruption may leave a pending helper/SSH operation or an
+already-started remote command running. This specific limitation is accepted
+for 0.0.1 without compensation; it is not a claim of repair, wider Harness
+support or successful cancellation of durable remote jobs. Follow-up tracks
+the upstream fix without a private Harness, watcher or arbitrary business
+deadline. New component failures do not inherit that exception.
+
+Component benefit benchmarks remain a separate track. Kimi, old business
+Skills, automatic Skill extraction and further domain/Harness expansion remain
+deferred. Cross-domain work may reuse native tasks and existing tools when
+needed; there is no compulsory domain router or new conversation framework.
 
 The old VAWS bootstrap, source/worktree manager and legacy installation path remain retired. This permission to rewrite product internals does not authorize deletion of unrelated user repositories, private material or running resources.
 
-Stable installation-level launchers select the current scripts under the switch lock and hold an OS generation lease until process exit. Generation cleanup retains the current config pointer, committed state, candidate, unresolved transaction and every leased generation. Missing or inconsistent state fails cleanup; untracked old paths are reported and preserved. Cleanup errors remain separate from already completed installation or business results.
+Stable installation-level launchers and active runtimes live outside disposable
+native plugin caches. Cleanup must preserve resources still used by the selected
+installation or a live entrypoint, along with user data, saved choices and unresolved
+operation receipts. It must establish exact ownership before removal; unknown paths
+or inconsistent state are not permission to delete. The product does not restore
+the removed generation-lease registry or speculative version garbage collector.
+Cleanup errors remain separate from already completed installation or business results.
