@@ -25,7 +25,7 @@ When a remote command or background indexing step fails, a vague error string wa
 2. **Opt-In Automatic Tool-Fault Reporting (Independent Toggle)**:
    - First-time setup offers an independent **"Automatic Tool-Fault Reporting"** option with a clear explanation of what it sends—**never enabled silently by default**.
    - **Decoupled from knowledge sharing**: You can enable fault reporting even if community knowledge contribution is turned off, and turning off fault reporting leaves local diagnostic logging completely intact.
-   - **Shared across all hosts**: Claude Code, OpenAI Codex CLI, and Kimi Code plugins (as well as standalone `remote-dev`) share a single user-level reporter and consent configuration (`diagnostics`). Turning the setting off immediately cancels any unsent reports.
+   - **Reuses the verified `gh` channel**: Issue reporting uses the same authenticated `gh` (GitHub CLI) channel verified during installation (surfacing `github_client_missing` explicitly if `gh` is absent). Claude Code, OpenAI Codex CLI, and Kimi Code plugins (as well as standalone `remote-dev`) share a single user-level reporter and consent configuration (`diagnostics`); turning the setting off immediately cancels any unsent reports.
 
 ---
 

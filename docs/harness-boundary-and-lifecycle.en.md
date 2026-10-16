@@ -37,9 +37,10 @@ In everyday workflows:
 - **Zero guessing**: Material ownership for every native session or child task (fork) comes strictly from verified host session IDs and transcript headers—never from "most recently modified file," matching `cwd`, or similar prompt text.
 - **Clear time boundaries**: Only turns generated after consent is enabled and within an authorized project path are captured. Disabling sharing immediately cancels unsent queue items; re-enabling captures only new turns going forward without back-scanning conversations from the disabled period.
 
-### 2.3 Protecting Uncertain (`unknown`) External Writes
-- Every external write (such as pushing a branch or opening a knowledge PR) re-verifies current consent before executing.
-- If a network glitch leaves an external write without a receipt, it is recorded as `unknown` with its original operation identity. Before any future write, the runtime reconciles read-only against the remote repository rather than blindly retrying as if the operation had never been sent.
+### 2.3 Stable GitHub Channel (`gh`) & Protecting Uncertain (`unknown`) Writes
+- **Unified `gh` authenticated transport (Hard Requirement)**: All GitHub API requests and remote Git branch pushes go through the authenticated `gh` CLI (`GhTransport` invokes `gh api`, and Git binds `!gh auth git-credential`), keeping credentials out of command-line arguments, logs, and config files. During installation, after verifying `gh auth status`, the playbook automatically Stars and Forks (`--clone=false --remote=false`) `mindie-agent` and `knowledge-vllm-ascend` so `<account>/knowledge-vllm-ascend` is ready in advance. If `gh` is missing or unauthenticated, operations fail visibly rather than silently degrading.
+- **Re-verify consent before every write**: Every external write (such as pushing a branch or opening a knowledge PR) re-verifies current consent before executing.
+- **Read-only reconciliation for `unknown` outcomes**: If a network glitch leaves an external write without a receipt, it is recorded as `unknown` with its original operation identity. Before any future write, the runtime reconciles read-only against the remote repository rather than blindly retrying as if the operation had never been sent.
 
 ---
 
