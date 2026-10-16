@@ -58,6 +58,11 @@ flowchart TB
 - The adapter's lightweight model generates titles, retrieval summaries, and applicability `conditions` for new blocks, updating `PACKAGE.md`.
 - Long tasks advance incrementally via durable cursors. If an indexing model call fails, the saved Markdown blocks remain intact on disk and the unfinished stage is reported honestly without faking completion or blindly retrying uncertain paid calls.
 
+### 2.4 Step 4: Automated PR Publication & Reconciliation via `gh` and Personal Forks
+- When community sharing is enabled, the publisher uses the verified **`gh` (GitHub CLI) channel** (binding `!gh auth git-credential` for Git pushes and `gh api` for PR operations) to push the contribution branch to the user's `<account>/knowledge-vllm-ascend` Fork and open or update a PR against [`knowledge-vllm-ascend`](https://github.com/mindie-agent/knowledge-vllm-ascend).
+- During initial installation, the Agent Auto-Install Playbook verifies `gh auth status` and automatically Stars and Forks (`--clone=false --remote=false`) `mindie-agent/knowledge-vllm-ascend` so the user's personal Fork is ready in advance.
+- If a network timeout leaves a PR write in an uncertain state (`unknown`), the next run reconciles read-only via `gh api` before attempting any write, never force-pushing or blindly duplicating PRs.
+
 ---
 
 ## 3. What a Knowledge Package Looks Like (`tasks/<task_hash>/`)
