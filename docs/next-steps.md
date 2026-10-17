@@ -4,7 +4,7 @@
 
 当前系统架构与知识闭环设计见 [系统架构与模块分工](architecture.md) 与 [知识与经验闭环设计](knowledge-system.md)，所有迭代遵循 [工程设计原则与演进准则](design-principles.md)。
 
-首发版本 [`0.0.1`](releases/0.0.1.md) 已完成发布，覆盖 Claude Code 与 OpenAI Codex CLI 在 macOS、原生 Windows 与 Windows WSL 上的六个主流开发环境；DeepSeek Harness 适配器 [`mindie-agent-dsh`](https://github.com/mindie-agent/mindie-agent-dsh) `0.0.1` 作为补充验收发布，提供只读知识与官方 `remote-dev`。
+首发版本 [`0.0.1`](releases/0.0.1.md) 已完成发布，覆盖 Claude Code 与 OpenAI Codex CLI 在 macOS、原生 Windows 与 Windows WSL 上的六个主流开发环境；DeepSeek Harness 适配器 [`mindie-agent-dsh`](https://github.com/mindie-agent/mindie-agent-dsh) 目前是 `0.0.1-preview`（prerelease），尚未计入正式 0.0.1；正式版待核心能力与 Windows/WSL 验收对齐后重新发布。
 
 ---
 
