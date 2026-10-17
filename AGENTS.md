@@ -1,37 +1,29 @@
 # MindIE Agent
 
-This repository owns architecture, domain boundaries and product entry documentation.
-Native implementations live in `mindie-agent/mindie-agent-codex`,
-`mindie-agent/mindie-agent-kimi` and `mindie-agent/mindie-agent-cc`.
-Shared runtime components live in their own repositories under `mindie-agent`.
+This repository owns product architecture, domain boundaries, and entry documentation (`docs/`).
+Native Harness plugins live in `mindie-agent-codex`, `mindie-agent-cc`, and `mindie-agent-kimi`.
+Shared runtime components live in `knowledge`, `remote-dev`, `diagnostics`, `npu-top`, and `coordinator`.
 
-Use native local tools for this repository. It has no bootstrap, workspace manager,
-client hook, MCP server, Skill catalogue, dependency lock or business source checkout.
-Use the user's business repository and the selected Harness plugin for actual tasks.
+## 1. Core Operating Rules (Always Active)
 
-Follow [design principles](docs/design-principles.md) and the [architecture](docs/architecture.md).
-MindIE Agent inherits all nine VAWS design principles; retiring the old runtime
-does not retire or replace those principles.
-Keep implementation status distinct from the target design and real acceptance evidence.
-Do not add old VAWS aliases or an alternative legacy installation path.
-Do not alter the user's unrelated skills, plugins or MCP configuration.
+- **Repository Boundary**: This repo contains documentation and architecture assets only—no runtime bootstrap, MCP server, client hook, Skill catalogue, or dependency lock. Do not add legacy VAWS aliases or alter the user's unrelated skills, plugins, or MCP configurations.
+- **Inner-Loop Efficiency (Principle 1 — Total Cost First)**:
+  - Edit files directly in the active checkout and verify only the affected scope.
+  - Never invent intermediate freeze steps, duplicate snapshot directories, or `readback.json`/`restoration.json`/`shadow.json` audit ceremonies during routine development.
+- **Transparency & State Honesty (Principle 9)**:
+  - Keep implementation status, target design, and real acceptance evidence distinct.
+  - Errors must remain visible to the caller; distinguish `completed`, `failed`, and `unknown` external effects. Never mask a failure or blindly retry an uncertain external write.
 
-## Paired component and plugin releases
+## 2. Progressive Disclosure Map (Read Only When Triggered)
 
-Before publishing a plugin Release, follow the
-[paired-release checklist](docs/release-compatibility-and-update.md#组件与插件配套发布).
-Every first-party runtime dependency in its final lock must have a published,
-non-draft, non-prerelease component Release whose tag resolves to that exact
-locked commit. Verify package versions and downloaded artifacts; a merge, green
-CI or a fixed Git revision alone is not a component Release. Publish dependencies
-before consumers, reuse unchanged releases, and keep component version histories
-independent. Record the complete mapping and actual evidence in the product
-release record. Content-only knowledge updates follow their publication contract.
+Do not preload all documentation into context. Read only the document matching your current task:
 
-## Mandatory design-principles review before PR submission
-
-All MindIE Agent development tasks MUST read the current [design principles](docs/design-principles.md) and review the final diff and affected behavior against all nine principles before creating any PR, including a draft. This covers code, configuration, dependencies, CI and project documentation. Review subsequent PR changes against the affected principles again.
-
-Errors MUST remain visible to the caller. Never turn a required-step failure into success, empty data, first use, user disablement or an undocumented fallback. Distinguish completed work, failure and uncertain external effects; do not repeat an uncertain write or hide the original error behind a later failure.
-
-Fix principle violations before submission. In the PR description, record the reviewed commit and principles revision, concrete conclusions and applicability, findings and fixes, and actual validation or remaining gaps. Tests passing, checkboxes, blanket N/A or “all principles followed” are not a review. If the principles cannot be read or the review is incomplete, report that explicitly and do not create or update the development PR until review is complete. Pure knowledge/feedback contributions follow their content rules; development of those features remains subject to this review.
+- **Architecture & Domain Boundaries** → [`docs/architecture.md`](docs/architecture.md)
+- **9 Product & Engineering Principles** → [`docs/design-principles.md`](docs/design-principles.md)
+- **Harness Plugin Boundary, Hooks & Lifecycle** → [`docs/harness-boundary-and-lifecycle.md`](docs/harness-boundary-and-lifecycle.md) & [`docs/native-runtime-reuse.md`](docs/native-runtime-reuse.md)
+- **Knowledge Flywheel & Privacy Redaction** → [`docs/knowledge-system.md`](docs/knowledge-system.md)
+- **Diagnostics & Issue Reporting** → [`docs/diagnostics-and-reporting.md`](docs/diagnostics-and-reporting.md)
+- **Gate — Submitting or Updating a Development PR**:
+  - Read and complete [`docs/design-principles.md#三开发-pr-提交前自查清单pre-pr-review`](docs/design-principles.md#三开发-pr-提交前自查清单pre-pr-review) before creating/updating any PR (including drafts), and include the concise review summary in the PR description.
+- **Gate — Publishing a Formal Component or Plugin Release**:
+  - Read and execute [`docs/release-compatibility-and-update.md#组件与插件配套发布`](docs/release-compatibility-and-update.md#组件与插件配套发布) only when publishing or auditing a formal GitHub Release.

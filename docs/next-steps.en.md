@@ -4,7 +4,7 @@
 
 For the current system architecture and knowledge loop design, see [Architecture & Module Boundaries](architecture.en.md) and [Knowledge & Experience System](knowledge-system.en.md). All iterations follow the [Engineering Design Principles](design-principles.en.md).
 
-Our initial [`0.0.1`](releases/0.0.1.en.md) release is live across six mainstream development environments (**Claude Code** and **OpenAI Codex CLI** on **macOS**, **native Windows**, and **Windows WSL**). The DeepSeek Harness adapter [`mindie-agent-dsh`](https://github.com/mindie-agent/mindie-agent-dsh) is currently `0.0.1-preview` (prerelease) and is not counted as the formal 0.0.1; the formal release will be re-cut after capability and Windows/WSL parity.
+Our initial [`0.0.1`](releases/0.0.1.en.md) release is live across six mainstream development environments (**Claude Code** and **OpenAI Codex CLI** on **macOS**, **native Windows**, and **Windows WSL**). The DeepSeek Harness adapter [`mindie-agent-dsh`](https://github.com/mindie-agent/mindie-agent-dsh) `0.0.1` is now a formal release: native entry, Stop capture/redaction/summary indexing, auto-fork contribution, feedback and diagnostics, accepted on macOS, 4090 WSL and Lenovo Windows.
 
 ---
 
