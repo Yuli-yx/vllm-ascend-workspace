@@ -35,11 +35,12 @@ MindIE Agent 采用“**宿主原生插件 + 共享运行时组件 + 开放知�
 | [`mindie-agent-cc`](https://github.com/mindie-agent/mindie-agent-cc)、[`mindie-agent-codex`](https://github.com/mindie-agent/mindie-agent-codex)、[`mindie-agent-kimi`](https://github.com/mindie-agent/mindie-agent-kimi)、[`mindie-agent-dsh`](https://github.com/mindie-agent/mindie-agent-dsh) | **宿主原生插件**：负责宿主任务身份识别、首次引导配置、Hook 事件桥接、公开对话提取、调用宿主原生轻量模型、插件安装与后台无感更新（DSH `0.0.1` 仅组合只读知识与官方 `remote-dev`，不含采集/贡献/上报） |
 | [`knowledge`](https://github.com/mindie-agent/knowledge) | **知识与经验引擎**：负责准入游标管理、确定性隐私脱敏、任务知识包构建、双层混合检索（BM25 + 语义）、有用性反馈与自动 PR 提交 |
 | [`knowledge-vllm-ascend`](https://github.com/mindie-agent/knowledge-vllm-ascend) | **公共领域知识库**：存放经过脱敏与合规审核的 `vLLM-Ascend` 结构化 Markdown 知识包，支持客户端增量同步 |
-| [`remote-dev`](https://github.com/mindie-agent/remote-dev) | **远端昇腾开发运行时**：基于 SSH 提供远端文件读写、补丁应用、受管长任务执行、作业取消与构建产物同步 |
+| [`remote-dev`](https://github.com/mindie-agent/remote-dev) | **远端昇腾开发执行底座**：基于 SSH 提供 19 个远端文件读写、补丁应用、受管长任务执行、作业取消与构建产物同步工具，直接消费 `coordinator` 同步的 `endpoints.json` 与 Endpoint Resolver |
+| [`coordinator`](https://github.com/mindie-agent/coordinator) | **升级版 SSH 与远端昇腾环境管理器（面向 Agent）**：统一管理机器台账（`machines.json` -> 自动同步 `endpoints.json`）、SSH 免密与多机容器互通（`mindie_hosts`）、远端容器绑定/开通（`mindie_container`）、Agent 级 NPU/节点/权重目录无代理探测與空闲算力推荐（`mindie_probe`）、物理 NPU 与端口租约协调（`mindie_lease`）及受管源码快照任务（`mindie_run`） |
+| [`npu-top`](https://github.com/mindie-agent/npu-top) | **昇腾集群可视化监控台（面向人类）**：复用读取 `coordinator` 的 `machines.json`，提供本地 Web 实时看板（`127.0.0.1:8788`）与 90 天有界 SQLite 热力图；Agent 侧探测统一走 `coordinator` 的 `mindie_probe`，无需依赖人类监控 Web 服务常驻 |
 | [`diagnostics`](https://github.com/mindie-agent/diagnostics) | **结构化诊断与故障上报**：提供有界本地诊断日志、错误定位编号，以及独立授权、自动去重的 GitHub Issue 故障上报 |
-| [`coordinator`](https://github.com/mindie-agent/coordinator) 与 [`npu-top`](https://github.com/mindie-agent/npu-top) | **多卡调度与集群观测（按需工具）**：分别提供多任务昇腾 NPU 独占租约协调与只读的跨节点 NPU 状态看板 |
 
-各宿主插件共享同一套 `knowledge`、`remote-dev` 和 `diagnostics` 核心实现；只有与宿主强相关的会话身份识别和 Transcript 解析留在各自插件内。DSH `0.0.1` 复用只读知识与官方 `remote-dev`，尚未实现 Stop 采集、经验贡献与故障上报，因此上手文档中的经验闭环仅适用于已实现采集的宿主适配器。
+各宿主插件共享同一套 `knowledge`、`coordinator`、`remote-dev` 和 `diagnostics` 核心实现；只有与宿主强相关的会话身份识别和 Transcript 解析留在各自插件内。DSH `0.0.1` 复用只读知识与官方 `remote-dev`，尚未实现 Stop 采集、经验贡献与故障上报，因此上手文档中的经验闭环仅适用于已实现采集的宿主适配器。
 
 ---
 

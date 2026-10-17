@@ -18,5 +18,7 @@
    - **独立开箱即用 Skills 持续扩充**：在 [`awesome-mindie-skills`](https://github.com/mindie-agent/awesome-mindie-skills) 中沉淀更多昇腾 Profiling、精度比对与算子开发专项指南。
 3. **上游宿主问题跟进**
    - 持续跟踪 OpenAI Codex CLI 子代理（Subagent）中断信号向在途工具调用传递的上游修复进展；待上游合入发布后及时补齐验证并更新兼容性声明，不在插件内引入高侵入性的私有杀进程轮询器。
-4. **持续打磨“零打扰”开发体验**
+4. **`coordinator` 远端环境管理与 `remote-dev` / `npu-top` 边界收敛**
+   - 已将面向 Agent 的 SSH 主机管理（`mindie_hosts`）、昇腾 NPU/节点/权重盘探测（`mindie_probe`）、容器绑定与自动开通（`mindie_container`）以及轻量 NPU/端口租约仲裁（`mindie_lease`）统一收口至 [`coordinator`](https://github.com/mindie-agent/coordinator)，并自动桥接 `machines.json` -> `remote-dev` 的 `endpoints.json`；[`npu-top`](https://github.com/mindie-agent/npu-top) 专注于面向人类的 Web 实时看板与 90 天热力图。
+5. **持续打磨“零打扰”开发体验**
    - 保持“一句话让 Agent 自动安装、日常开发零手动命令、后台无感更新”的轻量体验，让开发者把精力 100% 放在昇腾与推理核心工程问题上。

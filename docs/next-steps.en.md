@@ -18,5 +18,7 @@ Our initial [`0.0.1`](releases/0.0.1.en.md) release is live across six mainstrea
    - **Expand Standalone Skills**: Grow [`awesome-mindie-skills`](https://github.com/mindie-agent/awesome-mindie-skills) with additional ready-to-use workflows for Ascend profiling, accuracy verification, and kernel development.
 3. **Upstream Host Issue Tracking**
    - Track upstream fixes in OpenAI Codex CLI for delivering cancellation signals to in-flight tool calls when a child agent (`spawn_agent`) is interrupted, updating our compatibility range once upstream ships the fix rather than adding intrusive process-hunting workarounds.
-4. **Keep Everyday Workflows Zero-Ceremony**
+4. **Unified Remote Environment Management in `coordinator` (`coordinator` + `remote-dev` + `npu-top`)**
+   - Agent-facing SSH host/key/mesh management (`mindie_hosts`), agentless Ascend NPU/server/mount probing (`mindie_probe`), container binding/provisioning (`mindie_container`), and lightweight NPU/port lease coordination (`mindie_lease`) are now unified in [`coordinator`](https://github.com/mindie-agent/coordinator) with automatic `machines.json` -> `remote-dev` `endpoints.json` bridging, while [`npu-top`](https://github.com/mindie-agent/npu-top) focuses purely on the human-facing Web dashboard and 90-day utilization heatmaps.
+5. **Keep Everyday Workflows Zero-Ceremony**
    - Maintain a frictionless experience—one-sentence Agent-native installation, zero daily activation commands, and silent background updates—so developers can focus entirely on Ascend engineering.
