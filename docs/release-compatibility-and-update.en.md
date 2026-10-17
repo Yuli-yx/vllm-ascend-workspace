@@ -18,7 +18,7 @@ MindIE Agent ships **verified combinations of components and plugins**. Each rep
 Releases always follow a **bottom-up dependency order**:
 1. Publish the base diagnostics library [`diagnostics`](https://github.com/mindie-agent/diagnostics) first;
 2. Prepare and publish [`remote-dev`](https://github.com/mindie-agent/remote-dev) and [`knowledge`](https://github.com/mindie-agent/knowledge) (which depend on `diagnostics`);
-3. Publish the Harness plugins ([`mindie-agent-codex`](https://github.com/mindie-agent/mindie-agent-codex), [`mindie-agent-cc`](https://github.com/mindie-agent/mindie-agent-cc), [`mindie-agent-kimi`](https://github.com/mindie-agent/mindie-agent-kimi)) that lock those exact component releases, followed by the unified release record in `mindie-agent`.
+3. Publish the Harness plugins ([`mindie-agent-codex`](https://github.com/mindie-agent/mindie-agent-codex), [`mindie-agent-cc`](https://github.com/mindie-agent/mindie-agent-cc), [`mindie-agent-kimi`](https://github.com/mindie-agent/mindie-agent-kimi), [`mindie-agent-dsh`](https://github.com/mindie-agent/mindie-agent-dsh)) that lock those exact component releases, followed by the unified release record in `mindie-agent`. The DSH adapter `0.0.1` reuses the published `knowledge v0.11.0`, `remote-dev v0.9.5`, and `diagnostics v0.4.1` rather than re-releasing unchanged components; verify its `uv.lock` and stable-only DSH plugin set separately.
 
 Before publishing any plugin Release, maintainers verify and record the following checklist:
 

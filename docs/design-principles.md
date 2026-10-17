@@ -4,7 +4,7 @@
 
 MindIE Agent 的目标是**让通用编程 Agent 在昇腾（Ascend）NPU 与大模型推理工程中真正好用、省心、不添乱**。
 
-在项目演进过程中，我们从最初的九项基础产品边界原则出发，结合跨平台适配（macOS / Windows / WSL）、多宿主接入（Claude Code / Codex / Kimi Code）和实机排障实践，逐步沉淀出一套完整的工程设计准则。
+在项目演进过程中，我们从最初的九项基础产品边界原则出发，结合跨平台适配（macOS / Windows / WSL）、多宿主接入（Claude Code / Codex / Kimi Code / DeepSeek Harness）和实机排障实践，逐步沉淀出一套完整的工程设计准则。
 
 ---
 

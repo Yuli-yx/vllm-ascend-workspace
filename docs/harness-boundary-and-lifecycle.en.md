@@ -2,7 +2,7 @@
 
 [中文](harness-boundary-and-lifecycle.md) · [Back to Documentation Center](README.en.md)
 
-This document explains how responsibilities are divided between MindIE Agent's native Harness plugins (**Claude Code**, **OpenAI Codex CLI**, **Kimi Code**) and its shared runtime components, as well as how task identity, user consent, long-running jobs, and local data recovery work in practice.
+This document explains how responsibilities are divided between MindIE Agent's native Harness plugins (**Claude Code**, **OpenAI Codex CLI**, **Kimi Code**, **DeepSeek Harness**) and its shared runtime components, as well as how task identity, user consent, long-running jobs, and local data recovery work in practice.
 
 - Governed by: [Engineering Design Principles](design-principles.en.md) · [Architecture & Module Boundaries](architecture.en.md)
 - Release Verification Details: [`0.0.1` Release Record](releases/0.0.1.en.md)
@@ -16,17 +16,19 @@ MindIE Agent does not invent a proprietary chat UI or force you into a custom ta
 | Layer / Module | What It Owns | What It Never Does |
 | --- | --- | --- |
 | **Host Native Plugin Manager** | Downloading, installing, and recording installed plugin packages | Does not replace MindIE Agent's SemVer host-compatibility check |
-| **Harness Plugin Adapters** (`mindie-agent-cc` / `-codex` / `-kimi`) | Verifying native task identity, locating trusted transcripts, extracting public dialogue, invoking the host's lightweight native model, and shipping locked dependencies (`uv.lock`) | Never maintains a second knowledge database or duplicate process-supervision state machine |
+| **Harness Plugin Adapters** (`mindie-agent-cc` / `-codex` / `-kimi` / `-dsh`; DSH `0.0.1` composes only read-only knowledge and `remote-dev` for now) | Verifying native task identity, locating trusted transcripts, extracting public dialogue, invoking the host's lightweight native model, and shipping locked dependencies (`uv.lock`) | Never maintains a second knowledge database or duplicate process-supervision state machine |
 | **Shared Knowledge Engine** (`knowledge`) | Managing consent & cursors, running deterministic privacy redaction, coordinating block navigation indexing, serving two-layer search, and tracking PR receipts & recovery | Never imports host-private session tables or guesses task ownership from working directories or timestamps |
 | **Remote & Diagnostics Components** (`remote-dev` / `diagnostics`) | Providing standalone SSH remote execution/background job management, bounded local logs, and opt-in fault reporting | Never depends on experience capture being enabled, and never truncates user job outputs |
 
 In everyday workflows:
-- **Manual `/mindie-agent` Trigger**: Type `/mindie-agent <problem description>` (or `$mindie-agent` in Codex) whenever you want to invoke Ascend domain knowledge, historical troubleshooting experience, and the Skill workflow;
+- **Manual `/mindie-agent` Trigger**: Type `/mindie-agent <problem description>` (or `$mindie-agent` in Codex; DSH uses its native `/mindie-agent` gesture) whenever you want to invoke Ascend domain knowledge, historical troubleshooting experience, and the Skill workflow;
 - **Default Auto-Trigger for `remote-dev`**: Remote SSH and container tools are active by default and trigger automatically whenever you ask the Agent to work on a remote server or container, independent of whether experience capture is enabled.
 
 ---
 
 ## 2. Task Identity, User Consent, and Capture Scope
+
+> **DSH `0.0.1` boundary**: This adapter provides read-only knowledge retrieval and the official `remote-dev` tool set. It has no Stop capture, experience contribution, fault reporting, or per-session knowledge lease. Knowledge calls use the Host-level `dsh` identity; the consent, exact session attribution, and `gh` publication paths in this section apply only to adapters that implement capture.
 
 ### 2.1 Configure Consent Once—Persist Across Updates
 - **Persistent user preferences**: Your contribution choice, public destination repository, GitHub account, and authorized project scope are saved as persistent user settings decoupled from the installed code version.
@@ -45,6 +47,8 @@ In everyday workflows:
 ---
 
 ## 3. Conversation Extraction & Small-Model Indexing
+
+> DSH `0.0.1` does not implement this extraction pipeline. The capture adapter in its engine configuration fails loudly if invoked instead of silently returning empty content.
 
 - **Deterministic public extraction**: Only ordered user input, public assistant progress, and final answers are kept. Raw tool payloads, hidden reasoning traces, system prompts, and duplicate host wrapper events are stripped without truncating long tasks.
 - **Redaction first**: Gitleaks and deterministic privacy rules run before any bytes touch disk, enter the indexing model, or leave the machine.
