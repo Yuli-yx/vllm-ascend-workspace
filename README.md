@@ -193,9 +193,9 @@ flowchart TB
 
   subgraph Core["⚙️ 共享运行时组件底座 (Shared Runtime Components)"]
     Knowledge["🧠 mindie-knowledge<br/>本地 BM25 检索 · 确定性脱敏 · 异步索引"]
-    RemoteDev["⚡ remote-dev<br/>19 个 SSH 远端孪生工具 · 容器直连 · 持久作业"]
-    Coord["🎯 coordinator<br/>持久化用户容器 · Git 快照物化 · NPU 租约队列"]
-    NpuTop["📊 npu-top<br/>无代理 NPU 实时看板 · 90 天热力图 (只观测不分配)"]
+    Coord["🎯 coordinator<br/>升级版 SSH & 远端昇腾环境管理 · 容器开通/绑定 · NPU 探测与租约队列"]
+    RemoteDev["⚡ remote-dev<br/>19 个 SSH 远端孪生工具 · 容器直连 · 持久作业执行"]
+    NpuTop["📊 npu-top<br/>面向人类的 Web 实时看板 · 90 天热力图 (共享 machines.json)"]
     Diag["🛡️ mindie-diagnostics<br/>有界 JSONL 轮转日志 · 严密白名单故障上报"]
   end
 
@@ -209,11 +209,11 @@ flowchart TB
   Kimi --> P_Kimi
   DSH --> P_DSH
 
-  P_CC & P_Codex & P_Kimi & P_DSH --> Knowledge & RemoteDev & Diag
+  P_CC & P_Codex & P_Kimi & P_DSH --> Knowledge & Coord & RemoteDev & Diag
   Knowledge <--> Feed
-  RemoteDev --> Cluster
-  Coord --> RemoteDev
-  NpuTop -. "SSH 只读探测" .-> Cluster
+  Coord -- "自动同步 endpoints.json / Resolver" --> RemoteDev
+  Coord & RemoteDev --> Cluster
+  NpuTop -. "人类 Web 监控 (只读)" .-> Cluster
 ```
 
 ### 2. 昇腾 AI Infra 研发、测试与经验自进化闭环
@@ -298,9 +298,9 @@ MindIE Agent 的核心交互理念是**极简易用与渐进式披露（Progress
 | --- | --- | --- |
 | **[`knowledge`](https://github.com/mindie-agent/knowledge)** | `mindie-knowledge` | 共享知识与经验闭环引擎：本地 SQLite/BM25 检索、确定性脱敏、块索引调度、Git PR 发布与独立反馈 |
 | **[`knowledge-vllm-ascend`](https://github.com/mindie-agent/knowledge-vllm-ascend)** | *(Markdown 知识库)* | `vLLM-Ascend`、算子开发与 NPU 测试领域的公共工程知识包与有用性反馈语料源（更多昇腾 Infra 领域持续扩展中） |
-| **[`remote-dev`](https://github.com/mindie-agent/remote-dev)** | `remote-dev` | SSH 远端开发底座：19 个本地工具孪生、已有 Docker 容器直连、连接池复用与产物传输 |
-| **[`coordinator`](https://github.com/mindie-agent/coordinator)** | `mindie-coordinator` | 本地受管执行控制面：持久化用户容器生命周期、Git 快照物化与宿主机 NPU 排队分配 |
-| **[`npu-top`](https://github.com/mindie-agent/npu-top)** | `npu-top` | 昇腾 NPU 无代理监控台：Web 实时看板、90 天有界历史热力图与只读 Agent CLI/MCP 观测面 |
+| **[`remote-dev`](https://github.com/mindie-agent/remote-dev)** | `remote-dev` | SSH 远端开发执行底座：19 个本地工具孪生、容器直连（消费 `coordinator` 同步的 `endpoints.json` / Resolver）、连接池复用与产物传输 |
+| **[`coordinator`](https://github.com/mindie-agent/coordinator)** | `mindie-coordinator` | 升级版 SSH 与远端昇腾环境管理器：SSH 主机/免密/多机互通、容器绑定与自动开通、Agent 级 NPU/节点/权重挂载探测（`mindie_probe`）、NPU/端口租约仲裁（`mindie_lease`）及本地受管任务调度 |
+| **[`npu-top`](https://github.com/mindie-agent/npu-top)** | `npu-top` | 面向人类开发者的昇腾 NPU 可视化监控台：Web 实时看板（`127.0.0.1:8788`）与 90 天有界 SQLite 利用率热力图（直接共享读取 `coordinator` 的 `machines.json`） |
 | **[`diagnostics`](https://github.com/mindie-agent/diagnostics)** | `mindie-diagnostics` | 结构化诊断底座：无模型 4×1 MiB 本地日志轮转、离线脱敏诊断包与可选 GitHub Issue 自动上报 |
 
 ---

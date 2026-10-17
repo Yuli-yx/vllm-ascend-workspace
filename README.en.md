@@ -191,9 +191,9 @@ flowchart TB
 
   subgraph Core["⚙️ Shared Runtime Components"]
     Knowledge["🧠 mindie-knowledge<br/>Local BM25 · Deterministic Redaction · Block Indexing"]
+    Coord["🎯 coordinator<br/>Upgraded SSH & Remote Ascend Env Manager · Container Bind/Provision · NPU Probe & Leases"]
     RemoteDev["⚡ remote-dev<br/>19 SSH Tool Twins · Container Exec · Persistent Jobs"]
-    Coord["🎯 coordinator<br/>Persistent User Containers · Git Materialization · NPU Queue"]
-    NpuTop["📊 npu-top<br/>Agentless NPU Dashboard · 90-Day Heatmaps (Observation-Only)"]
+    NpuTop["📊 npu-top<br/>Human-Facing Web Dashboard · 90-Day Heatmaps (Shares machines.json)"]
     Diag["🛡️ mindie-diagnostics<br/>Bounded 4x1 MiB JSONL Logs · Allowlist Issue Reporter"]
   end
 
@@ -207,11 +207,11 @@ flowchart TB
   Kimi --> P_Kimi
   DSH --> P_DSH
 
-  P_CC & P_Codex & P_Kimi & P_DSH --> Knowledge & RemoteDev & Diag
+  P_CC & P_Codex & P_Kimi & P_DSH --> Knowledge & Coord & RemoteDev & Diag
   Knowledge <--> Feed
-  RemoteDev --> Cluster
-  Coord --> RemoteDev
-  NpuTop -. "Read-only SSH probes" .-> Cluster
+  Coord -- "Syncs endpoints.json / Resolver" --> RemoteDev
+  Coord & RemoteDev --> Cluster
+  NpuTop -. "Human Web UI (Read-only)" .-> Cluster
 ```
 
 ### 2. Self-Evolving AI Infra Engineering Loop
@@ -296,9 +296,9 @@ Every repository under `@mindie-agent` has a clean, single-purpose boundary and 
 | --- | --- | --- |
 | **[`knowledge`](https://github.com/mindie-agent/knowledge)** | `mindie-knowledge` | Shared knowledge runtime: local SQLite/BM25 retrieval, fail-closed redaction, block indexing, Git PR publishing, and feedback |
 | **[`knowledge-vllm-ascend`](https://github.com/mindie-agent/knowledge-vllm-ascend)** | *(Markdown Corpus)* | Canonical public knowledge packages and usefulness feedback for `vLLM-Ascend`, operator development, and NPU testing (expanding to broader Ascend AI Infra domains) |
-| **[`remote-dev`](https://github.com/mindie-agent/remote-dev)** | `remote-dev` | SSH remote development substrate: 19 local tool twins, existing Docker container execution, pooled RPC, and artifact streaming |
-| **[`coordinator`](https://github.com/mindie-agent/coordinator)** | `mindie-coordinator` | Local control plane: persistent user containers (`mindie-<user>`), Git snapshot materialization, and host NPU queue arbitration |
-| **[`npu-top`](https://github.com/mindie-agent/npu-top)** | `npu-top` | Agentless Ascend NPU observability dashboard: live web UI, bounded 90-day SQLite heatmaps, and read-only Agent CLI/MCP tools |
+| **[`remote-dev`](https://github.com/mindie-agent/remote-dev)** | `remote-dev` | SSH remote development execution substrate: 19 local tool twins, container execution (consuming `coordinator`'s `endpoints.json` / Resolver), pooled RPC, and artifact streaming |
+| **[`coordinator`](https://github.com/mindie-agent/coordinator)** | `mindie-coordinator` | Upgraded SSH & remote Ascend environment manager: SSH host/key/mesh management, container binding & provisioning, Agent-facing NPU/server/mount probing (`mindie_probe`), NPU/port lease arbitration (`mindie_lease`), and managed task execution |
+| **[`npu-top`](https://github.com/mindie-agent/npu-top)** | `npu-top` | Human-facing Ascend NPU observability dashboard: live web UI (`127.0.0.1:8788`) and bounded 90-day SQLite utilization heatmaps (reading `coordinator`'s shared `machines.json`) |
 | **[`diagnostics`](https://github.com/mindie-agent/diagnostics)** | `mindie-diagnostics` | Model-free observability substrate: bounded 4×1 MiB JSONL rotation, offline redacted bundles, and opt-in GitHub Issue reporting |
 
 ---
