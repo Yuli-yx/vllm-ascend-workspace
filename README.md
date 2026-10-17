@@ -149,7 +149,7 @@ Agent 读取本页面后，会自动校验 **`gh`（GitHub CLI）稳定交互通
 | **Claude Code** | `claude plugin marketplace add "https://github.com/mindie-agent/mindie-agent-cc.git#v0.0.1" && claude plugin install mindie-agent@mindie-agent-cc --scope user && claude --init-only` | [`mindie-agent-cc`](https://github.com/mindie-agent/mindie-agent-cc) |
 | **OpenAI Codex CLI** | `codex plugin marketplace add https://github.com/mindie-agent/mindie-agent-codex.git --ref v0.0.1 && codex plugin add mindie-agent@mindie-agent --json` | [`mindie-agent-codex`](https://github.com/mindie-agent/mindie-agent-codex) |
 | **Kimi Code CLI** | `git clone https://github.com/mindie-agent/mindie-agent-kimi.git && cd mindie-agent-kimi && python3 scripts/setup.py` | [`mindie-agent-kimi`](https://github.com/mindie-agent/mindie-agent-kimi) |
-| **DeepSeek Harness (DSH)** | `git clone --depth 1 --branch v0.0.1 https://github.com/mindie-agent/mindie-agent-dsh.git /tmp/mindie-agent-dsh && uv run --quiet --no-project --python 3.11 /tmp/mindie-agent-dsh/scripts/setup.py`，随后在 DSH **Plugins** 页面启用 `git+https://github.com/mindie-agent/mindie-agent-dsh.git#v0.0.1` | [`mindie-agent-dsh`](https://github.com/mindie-agent/mindie-agent-dsh) |
+| **DeepSeek Harness (DSH) — 0.0.1-preview** | `git clone --depth 1 --branch v0.0.1 https://github.com/mindie-agent/mindie-agent-dsh.git /tmp/mindie-agent-dsh && uv run --quiet --no-project --python 3.11 /tmp/mindie-agent-dsh/scripts/setup.py`，随后在 DSH **Plugins** 页面启用 `git+https://github.com/mindie-agent/mindie-agent-dsh.git#v0.0.1` | [`mindie-agent-dsh`](https://github.com/mindie-agent/mindie-agent-dsh) |
 | **仅安装 NPU 监控台 (`npu-top`)** | `uvx --from "https://github.com/mindie-agent/npu-top/releases/download/v0.1.6/npu_top-0.1.6-py3-none-any.whl" npu-top serve` | [`npu-top`](https://github.com/mindie-agent/npu-top) |
 
 ---
@@ -290,7 +290,7 @@ MindIE Agent 的核心交互理念是**极简易用与渐进式披露（Progress
 | **[`mindie-agent-cc`](https://github.com/mindie-agent/mindie-agent-cc)** | **Claude Code** | Claude Code 原生插件：生命周期 Hook、MCP 服务桥接与固定运行时管理 |
 | **[`mindie-agent-codex`](https://github.com/mindie-agent/mindie-agent-codex)** | **OpenAI Codex CLI** | OpenAI Codex CLI 原生插件：Marketplace 安装、Rollout 增量脱敏采集与服务连续性管理 |
 | **[`mindie-agent-kimi`](https://github.com/mindie-agent/mindie-agent-kimi)** | **Kimi Code CLI** | Kimi Code 原生插件：代数原子更新、公开会话投影采集与 MCP 桥接 |
-| **[`mindie-agent-dsh`](https://github.com/mindie-agent/mindie-agent-dsh)** | **DeepSeek Harness (DSH)** | DSH Host 组合插件：标准模式直接继承的 `/mindie-agent` Skill、只读知识 MCP 与官方 `remote-dev` MCP；仅依赖 DSH 稳定插件，不覆盖任何内置行/预设 |
+| **[`mindie-agent-dsh`](https://github.com/mindie-agent/mindie-agent-dsh)** | **DeepSeek Harness (DSH)** | DSH 适配器（`0.0.1-preview`，非正式 0.0.1）：Host 组合插件：标准模式直接继承的 `/mindie-agent` Skill、只读知识 MCP 与官方 `remote-dev` MCP；仅依赖 DSH 稳定插件，不覆盖任何内置行/预设 |
 
 ### 3. 共享运行时底座（Shared Runtime Components）
 
