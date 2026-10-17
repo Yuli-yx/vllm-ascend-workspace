@@ -18,7 +18,7 @@ MindIE Agent 对外发布的是**经过实机验证的组件与插件组合**。
 发版必须严格遵循**自底向上的拓扑依赖顺序**：
 1. 先发布基础诊断组件 [`diagnostics`](https://github.com/mindie-agent/diagnostics)；
 2. 再并行准备并发布依赖它的 [`remote-dev`](https://github.com/mindie-agent/remote-dev) 与 [`knowledge`](https://github.com/mindie-agent/knowledge)；
-3. 最后发布锁定了上述组件版本的各宿主插件（[`mindie-agent-codex`](https://github.com/mindie-agent/mindie-agent-codex)、[`mindie-agent-cc`](https://github.com/mindie-agent/mindie-agent-cc)、[`mindie-agent-kimi`](https://github.com/mindie-agent/mindie-agent-kimi)）及主仓库版本记录。
+3. 最后发布锁定了上述组件版本的各宿主插件（[`mindie-agent-codex`](https://github.com/mindie-agent/mindie-agent-codex)、[`mindie-agent-cc`](https://github.com/mindie-agent/mindie-agent-cc)、[`mindie-agent-kimi`](https://github.com/mindie-agent/mindie-agent-kimi)、[`mindie-agent-dsh`](https://github.com/mindie-agent/mindie-agent-dsh)）及主仓库版本记录。DSH 适配器在 `0.0.1` 直接复用已发布的 `knowledge v0.11.0`、`remote-dev v0.9.5` 与 `diagnostics v0.4.1`，不重复发布未改动组件；其 `uv.lock` 与 DSH 稳定插件依赖需单独核对。
 
 在发布任何一个宿主插件 Release 前，维护者必须逐项核对以下配套清单，并在版本发布记录中留存证据：
 

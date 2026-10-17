@@ -25,7 +25,7 @@ When a remote command or background indexing step fails, a vague error string wa
 2. **Opt-In Automatic Tool-Fault Reporting (Independent Toggle)**:
    - First-time setup offers an independent **"Automatic Tool-Fault Reporting"** option with a clear explanation of what it sends—**never enabled silently by default**.
    - **Decoupled from knowledge sharing**: You can enable fault reporting even if community knowledge contribution is turned off, and turning off fault reporting leaves local diagnostic logging completely intact.
-   - **Reuses the verified `gh` channel**: Issue reporting uses the same authenticated `gh` (GitHub CLI) channel verified during installation (surfacing `github_client_missing` explicitly if `gh` is absent). Claude Code, OpenAI Codex CLI, and Kimi Code plugins (as well as standalone `remote-dev`) share a single user-level reporter and consent configuration (`diagnostics`); turning the setting off immediately cancels any unsent reports.
+   - **Reuses the verified `gh` channel**: Issue reporting uses the same authenticated `gh` (GitHub CLI) channel verified during installation (surfacing `github_client_missing` explicitly if `gh` is absent). Claude Code, OpenAI Codex CLI, and Kimi Code plugins (as well as standalone `remote-dev`) share a single user-level reporter and consent configuration (`diagnostics`); the DSH `0.0.1` read-only adapter does not enable fault reporting; turning the setting off immediately cancels any unsent reports.
 
 ---
 
@@ -33,7 +33,7 @@ When a remote command or background indexing step fails, a vague error string wa
 
 | Module / Role | Responsibility |
 | --- | --- |
-| **Harness Plugin Adapters** (`mindie-agent-cc` / `-codex` / `-kimi`) | Log native entrypoint, Hook, MCP startup, and protocol errors; provide setup toggles and human-readable status |
+| **Harness Plugin Adapters** (`mindie-agent-cc` / `-codex` / `-kimi` / `-dsh`) | Log native entrypoint, Hook, MCP startup, and protocol errors; provide setup toggles and human-readable status |
 | **Runtime Components** (`knowledge` / `remote-dev`) | Record stage, version, monotonic duration, exit code, and cleanup outcome at the exact boundary where an internal fault occurs, cleanly separating normal user-command exits from internal tool bugs |
 | **Diagnostics Engine** (`diagnostics`) | Enforce log schemas, allowlist-only redaction, bounded disk rotation, fingerprint deduplication, finite retry budgets, and GitHub Issue creation |
 | **GitHub Maintainers** | Investigate reported fault evidence and ship fixes |

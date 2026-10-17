@@ -4,7 +4,7 @@
 
 MindIE Agent is built with a single goal: **make general-purpose AI coding agents genuinely effective, effortless, and unobtrusive for Ascend NPU and LLM inference engineering.**
 
-Starting from nine foundational product and boundary principles, our engineering guidelines have evolved through real-world Ascend troubleshooting, cross-platform support (macOS, native Windows, Windows WSL), and multi-host integration (Claude Code, OpenAI Codex CLI, Kimi Code) into a comprehensive set of product and operational rules.
+Starting from nine foundational product and boundary principles, our engineering guidelines have evolved through real-world Ascend troubleshooting, cross-platform support (macOS, native Windows, Windows WSL), and multi-host integration (Claude Code, OpenAI Codex CLI, Kimi Code, DeepSeek Harness) into a comprehensive set of product and operational rules.
 
 ---
 

@@ -13,14 +13,14 @@
 
 ## 1. 产品定位与日常触发方式
 
-MindIE Agent 的核心定位是**给开发者现有的 AI 编程客户端（Claude Code、Codex、Kimi Code）装上昇腾（Ascend）NPU 与大模型推理工程引擎**。
+MindIE Agent 的核心定位是**给开发者现有的 AI 编程客户端（Claude Code、Codex、Kimi Code、DeepSeek Harness）装上昇腾（Ascend）NPU 与大模型推理工程引擎**。
 
 - **不另造轮子**：我们不自建底座大模型、不替代宿主本身的对话框架，也不强行托管用户的业务代码仓库。你依然在自己熟悉的终端和代码仓库里直接跟 Agent 对话。
 - **两种清晰的触发方式（按需唤醒 vs 默认就绪）**：
-  - **手动触发 `/mindie-agent`（知识、经验与 Skill 系统）**：在需要昇腾推理排障、算子开发或模型迁移时，直接使用 `/mindie-agent`（Codex 中也可使用 `$mindie-agent`）并阐述你的问题，即可唤醒昇腾 Skill 体系、检索历史经验包并关联当前任务的经验闭环；平时写普通代码时完全静默、零打扰。
+  - **手动触发 `/mindie-agent`（知识、经验与 Skill 系统）**：在需要昇腾推理排障、算子开发或模型迁移时，直接使用 `/mindie-agent`（Codex 中也可使用 `$mindie-agent`；DSH 中使用 `/mindie-agent` 用户手势）并阐述你的问题，即可唤醒昇腾 Skill 体系、检索历史经验包并关联当前任务的经验闭环；平时写普通代码时完全静默、零打扰。
   - **默认自动触发 `remote-dev`（远端昇腾开发执行）**：`remote-dev` 作为常驻 MCP 工具默认就绪。日常对话中只要提到远端服务器、容器或 NPU 命令，无需输入任何斜杠命令即可直接触发远端文件读写、补丁同步与后台长任务执行。
 - **配置一次，长期有效**：首次配置好知识贡献意愿、目标公开仓库与授权项目范围后，后续所有授权范围内的任务都会自动生效。历史经验仅供 Agent 按需参考，绝不强制检索或强制投票。
-- **硬性前置指标：稳定的 GitHub 交互通道（`gh` CLI）与按需收敛 Fork 范围**：插件市场拉取、锁定发行版校验、`knowledge-vllm-ascend` 增量同步、经验闭环自动提交 PR（通过 `gh api` 与 `!gh auth git-credential`）以及可选的故障上报均依赖已登录的 `gh`（GitHub CLI）通道。鉴于 `@mindie-agent` 组织下拥有十余个仓库，我们坚持**收敛、按需的二级 Fork 策略**：（1）**安装阶段**：校验 `gh auth status` 与 `gh auth setup-git` 后，仅顺带为统一入口仓 `mindie-agent/mindie-agent` 点亮 **Star** 并创建个人远端 **Fork**（`--clone=false --remote=false`），不批量 Fork 各个插件仓或知识库；（2）**开启知识贡献阶段（按需）**：当用户明确开启面向目标公开知识库（如 `mindie-agent/knowledge-vllm-ascend`）的社区贡献时，再按需为该知识库点亮 **Star**、创建个人远端 **Fork** 并绑定 `fork` 配置（`<GH_USER>/<repo>`），确保分支推送与跨 Fork PR 提交通道就绪。
+- **硬性前置指标：稳定的 GitHub 交互通道（`gh` CLI）与按需收敛 Fork 范围**：插件市场拉取、锁定发行版校验、`knowledge-vllm-ascend` 增量同步、经验闭环自动提交 PR（通过 `gh api` 与 `!gh auth git-credential`）以及可选的故障上报均依赖已登录的 `gh`（GitHub CLI）通道（DSH `0.0.1` 只读适配器不启用这些路径，因此不依赖 `gh`）。鉴于 `@mindie-agent` 组织下拥有十余个仓库，我们坚持**收敛、按需的二级 Fork 策略**：（1）**安装阶段**：校验 `gh auth status` 与 `gh auth setup-git` 后，仅顺带为统一入口仓 `mindie-agent/mindie-agent` 点亮 **Star** 并创建个人远端 **Fork**（`--clone=false --remote=false`），不批量 Fork 各个插件仓或知识库；（2）**开启知识贡献阶段（按需）**：当用户明确开启面向目标公开知识库（如 `mindie-agent/knowledge-vllm-ascend`）的社区贡献时，再按需为该知识库点亮 **Star**、创建个人远端 **Fork** 并绑定 `fork` 配置（`<GH_USER>/<repo>`），确保分支推送与跨 Fork PR 提交通道就绪。
 - **聚焦核心领域**：当前首发核心领域为 `vLLM` / `vLLM-Ascend` 推理与算子工程，后续可按相同知识包架构平滑扩展更多领域。
 
 ---
@@ -32,14 +32,14 @@ MindIE Agent 采用“**宿主原生插件 + 共享运行时组件 + 开放知�
 | 组件 / 仓库 | 核心职责 |
 | --- | --- |
 | [`mindie-agent`](https://github.com/mindie-agent/mindie-agent)（本仓库） | 产品整体架构、领域边界、工程设计原则、跨组件契约与统一版本发布记录 |
-| [`mindie-agent-cc`](https://github.com/mindie-agent/mindie-agent-cc)、[`mindie-agent-codex`](https://github.com/mindie-agent/mindie-agent-codex)、[`mindie-agent-kimi`](https://github.com/mindie-agent/mindie-agent-kimi) | **宿主原生插件**：负责宿主任务身份识别、首次引导配置、Hook 事件桥接、公开对话提取、调用宿主原生轻量模型、插件安装与后台无感更新 |
+| [`mindie-agent-cc`](https://github.com/mindie-agent/mindie-agent-cc)、[`mindie-agent-codex`](https://github.com/mindie-agent/mindie-agent-codex)、[`mindie-agent-kimi`](https://github.com/mindie-agent/mindie-agent-kimi)、[`mindie-agent-dsh`](https://github.com/mindie-agent/mindie-agent-dsh) | **宿主原生插件**：负责宿主任务身份识别、首次引导配置、Hook 事件桥接、公开对话提取、调用宿主原生轻量模型、插件安装与后台无感更新（DSH `0.0.1` 仅组合只读知识与官方 `remote-dev`，不含采集/贡献/上报） |
 | [`knowledge`](https://github.com/mindie-agent/knowledge) | **知识与经验引擎**：负责准入游标管理、确定性隐私脱敏、任务知识包构建、双层混合检索（BM25 + 语义）、有用性反馈与自动 PR 提交 |
 | [`knowledge-vllm-ascend`](https://github.com/mindie-agent/knowledge-vllm-ascend) | **公共领域知识库**：存放经过脱敏与合规审核的 `vLLM-Ascend` 结构化 Markdown 知识包，支持客户端增量同步 |
 | [`remote-dev`](https://github.com/mindie-agent/remote-dev) | **远端昇腾开发运行时**：基于 SSH 提供远端文件读写、补丁应用、受管长任务执行、作业取消与构建产物同步 |
 | [`diagnostics`](https://github.com/mindie-agent/diagnostics) | **结构化诊断与故障上报**：提供有界本地诊断日志、错误定位编号，以及独立授权、自动去重的 GitHub Issue 故障上报 |
 | [`coordinator`](https://github.com/mindie-agent/coordinator) 与 [`npu-top`](https://github.com/mindie-agent/npu-top) | **多卡调度与集群观测（按需工具）**：分别提供多任务昇腾 NPU 独占租约协调与只读的跨节点 NPU 状态看板 |
 
-各宿主插件共享同一套 `knowledge`、`remote-dev` 和 `diagnostics` 核心实现；只有与宿主强相关的会话身份识别和 Transcript 解析留在各自插件内。
+各宿主插件共享同一套 `knowledge`、`remote-dev` 和 `diagnostics` 核心实现；只有与宿主强相关的会话身份识别和 Transcript 解析留在各自插件内。DSH `0.0.1` 复用只读知识与官方 `remote-dev`，尚未实现 Stop 采集、经验贡献与故障上报，因此上手文档中的经验闭环仅适用于已实现采集的宿主适配器。
 
 ---
 
