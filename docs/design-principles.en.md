@@ -46,9 +46,9 @@ These nine principles define what should be a tool, what should be a Skill or kn
 
 As MindIE Agent matured across hosts and operating systems, we codified five operational guidelines extending Principles 8 and 9:
 
-### 10. Build Only for Proven Gaps and Remove Legacy Baggage
+### 10. Build Only for Proven Gaps and Refactor Directly Around Core Business Logic
 - **Verify with lightweight probes first**: Before refactoring updaters, hooks, or process management, verify host and OS behavior (timeouts, cancellation, abrupt termination) using minimal model-free probes.
-- **No dual-track state**: Once a replacement mechanism is verified, delete the superseded custom updater, duplicate state tables, and obsolete configs while preserving existing user Markdown packages, cursors, and consent settings.
+- **Take core business logic correctness as the sole baseline; delete and rewrite unreasonable designs directly**: When encountering over-defensive imaginary-enemy checks, shadow state machines, or obsolete shims, refactor destructively by deleting and rewriting them cleanly rather than maintaining dual-track baggage (while preserving existing user Markdown packages, cursors, and consent settings).
 - **Data-format-driven compatibility**: Before formal release, rewrite intermediate implementations cleanly without carrying multi-generation shims. After formal release, design compatibility around actual schema and contract changes rather than guessing from version strings.
 
 ### 11. Decouple User Consent from Code Installation Identity (Configure Once, Run Automatically Thereafter)
@@ -56,7 +56,7 @@ As MindIE Agent matured across hosts and operating systems, we codified five ope
 - **No re-prompting or silent overrides**: Restarting sessions, reinstalling, or silently updating a plugin preserves existing consent and explicit disablement without re-prompting or silently turning disabled settings back on.
 
 ### 12. Paired Component and Plugin Releases
-- **Release dependencies before plugins**: Every first-party runtime dependency pinned by a plugin (`diagnostics`, `remote-dev`, `knowledge`) must first have a published, non-draft, non-prerelease GitHub Release whose tag resolves to the exact locked commit and whose uploaded wheel/sdist artifacts match `uv.lock`.
+- **Release dependencies before plugins**: Every first-party runtime dependency pinned by a plugin (`diagnostics`, `remote-dev`, `knowledge`, `coordinator`, `npu-top`) must first have a published, non-draft, non-prerelease GitHub Release whose tag resolves to the exact locked commit and whose uploaded wheel/sdist artifacts match `uv.lock`.
 - **Independent component versioning**: Each repository maintains its own version sequence and reuses unchanged Releases without artificial version bumps. See the [Paired Component and Plugin Release Checklist](release-compatibility-and-update.en.md#paired-component-and-plugin-releases).
 
 ### 13. Silent Background Updates with Atomic Idle Cutover
@@ -81,9 +81,11 @@ As MindIE Agent matured across hosts and operating systems, we codified five ope
    - **Eliminate bimodal timeout extremes (no sub-second hot-path guillotines or unbounded `timeout=None`)**:
      - **No sub-second (`< 1s`) SQLite lock timeouts**: Multi-thread/cross-process SQLite locks must never use `100ms–250ms` micro-timeouts (which abort normal queries or permanently drop `Stop` session captures under normal indexing load); enable WAL mode and use `3.0s–5.0s` timeouts;
      - **No unbounded `timeout=None` on subprocesses or handshakes**: Every external subprocess (`gitleaks`, summary commands, candidate validation, `docker inspect/top` under host locks) must specify an explicit bounded timeout, and RPC handshakes (`ready.wait`) must be governed by `deadline` from function entry.
-2. **Anti Over-Defensive Self-Bricking**:
-   - **No one-way self-bricking state machines**: Recoverable config drift, transient upgrade slowdowns, or untracked scratch files (`git status --porcelain`) must never permanently lock the system into an unrecoverable `fault`/`suppressed` state or block valid container execution;
-   - **No repetitive full-tree hashing or signature-reflection locks**: Never re-`stat` `.owner` on every `SELECT`, hash every `.so` file 3–4 times per task, lock internal function parameter defaults with `inspect.signature` in production probes, or copy-paste hundreds of lines of shadow `*_fallback.py` / `*_bootstrap.py` state machines across repositories.
+2. **`v0.0.2` Four Anti Over-Defensive Programming Iron Rules (Preserving `gpt6-astra` Core Design, Stripping Defensive Paranoia Bloat)**:
+   - **Iron Rule 1: Lightweight local state connection; prohibit per-SQL hot-path `.owner`/Schema reflection self-checks**: SQLite executes `PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;` and schema initialization only during `open_database`. Intercepting every `SELECT` to run `lstat(.owner)` or `:memory:` full-table schema reflection is strictly forbidden.
+   - **Iron Rule 2: Enforce a strict boundary between external side effects and local state; abolish local one-way self-bricking**: Retain `unknown` receipt reconciliation strictly for irreversible external writes (metered LLM calls, GitHub PR/Issue mutations, destructive remote writes). Local idempotent states (virtualenv upgrades, `consent.json` migration, container `task_environment` preparation) must report errors transparently and self-heal idempotently on the next unlocked run—never write `suppressed` / permanent `fault` / `TaskRootBusy` self-bricking tombstones.
+   - **Iron Rule 3: Prohibit cross-repo copy-pasted `*_fallback.py` / `*_bootstrap.py` shadow state machines and `ctypes` Win32 ACL ceremonies**: Host plugins depend directly on shared components pinned via `uv.lock`, and atomic file replacement uses standard library `os.replace()`.
+   - **Iron Rule 4: Prohibit `inspect.signature` internal function signature reflection locks and giant inline Python string blobs (such as `REMOTE_FILE_PY`)**: Probes verify only public interfaces and version contracts; remote workers must be maintained as standalone `.py` modules.
 
 ### 16. Testing Design Guidelines: Eliminate Filler Tests, Embrace Tiered Live A2/A3 NPU Verification
 See [Tiered Testing Architecture & Case Design Guidelines](testing-architecture.en.md) for the complete specification:
@@ -112,10 +114,10 @@ Every development PR across all MindIE Agent repositories (covering code, config
 | **5. Informational Skills** | Do Skills remain clear, helpful guides rather than mandatory procedural checklists? |
 | **6. Advisory Knowledge** | Do knowledge entries and feedback remain advisory without mandatory lookups, writes, or truth certification? |
 | **7. On-Demand Activation** | Does everything trigger strictly on demand without unrequested background work or closing rituals? |
-| **8. Reuse & Paired State** | Were host/OS/mature tools reused first? Were replaced implementations deleted while preserving user data, consent, and `unknown` receipts? |
+| **8. Reuse & Paired State** | Were host/OS/mature tools reused first? Were replaced implementations directly deleted and rewritten while preserving user data, consent, and external `unknown` receipts? |
 | **9. Error Visibility & No Silent Fallback** | Do failure paths report honest, actionable errors without `except Exception:` silent `{}` / `"active"` / `exit 0` fallbacks, `except OSError:` swallowing `TimeoutError`, blind retries of `unknown` writes, or local bookkeeping/cleanup timeouts overwriting succeeded remote results? |
 | **10. Timeout Arithmetic & Bounds** | Do all new/modified timeouts satisfy **`outer_timeout >= sum(inner_budgets) + cleanup_grace` (e.g., `SIGTERM->SIGKILL` / `inventory` drain)**? Are sub-second (`<1s`) SQLite lock guillotines, unbounded `timeout=None` subprocess calls, pre-`deadline` handshakes, and `timeout N cmd \|\| cmd` re-runs eliminated? |
-| **11. Anti Over-Defensive Self-Bricking** | Does the change avoid one-way unrecoverable `fault`/`suppressed` lockouts, git-dirty container rejection, `inspect.signature` parameter locks, or heavy hot-path paranoia checks? |
+| **11. Anti Over-Defensive Programming (`v0.0.2` Four Iron Rules)** | Does the change strictly obey the `v0.0.2` Four Iron Rules: (1) zero hot-path SQL `.owner`/Schema reflection checks; (2) `unknown` reserved strictly for irreversible external writes, with zero local one-way self-bricking (`fault`/`suppressed`/`TaskRootBusy`); (3) zero cross-repo copy-pasted `*_fallback.py`/`*_bootstrap.py` or Win32 ACL ceremonies (standard `os.replace()`); (4) zero `inspect.signature` internal parameter locks or giant inline Python string blobs (standalone `.py` remote workers)? |
 | **12. Tiered Test Validity** | Do new tests verify real business/domain quality rather than defensive `chmod`/`symlink`/`ValueError` paranoia, silent-fallback assertions, production-script tampering, or doc-grepping, while meeting Tier 0 (`<5s`) – Tier 3 budgets and live A2/A3 NPU rules? |
 
 Include a concise `## 设计原则 Review` (Design Principles Review) summary in every development PR description documenting the reviewed commit, conclusions, fixes applied, and verification performed.
