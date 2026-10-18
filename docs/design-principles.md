@@ -99,6 +99,21 @@ MindIE Agent 的目标是**让通用编程 Agent 在昇腾（Ascend）NPU 与大
    - **Tier 2（常备 A2/A3 NPU 真机无损集成测试 `@pytest.mark.live_npu`，`< 25s`）**：直接连接常驻 A2 (`173.125.1.2`) 与 A3 (`192.168.13.165` / `.156` / `.154`) 集群，使用隔离沙箱目录（如 `state_dir="/tmp/mindie-npu-test-<uuid>"`）在不干扰线上任务的前提下，常态化验证真机 `npu-smi` 探测、多 Die `Phy-ID` 映射、Docker 容器穿透、Linux `/proc` 进程树排空与租约防抢占。
    - **Tier 3（端到端宿主 CLI 与 `mindie-bench` 实机基准验收，`< 90s`）**：驱动真实宿主 CLI 与 `mindie-bench` Canary 任务完成闭环验证。
 
+### 17. Agent-Native 代码与注释规范（100% Agent 维护代码库）
+MindIE Agent 全系 11 个仓库均为 **100% 由编程 Agent 阅读、演进与维护的代码库**。代码结构与注释必须针对 Agent 的注意力机制与工具窗口（如单次 `view_file` 800 行上限）做原生优化：
+1. **模块体量与上下文窗口友好性（Context-Window Friendliness）**：
+   - 核心业务模块应保持高内聚、精炼紧凑，原则上单文件控制在 **800 行以内**（单次 `view_file` 即可完整加载全貌），避免因防御性样板代码膨胀导致 Agent 被迫多次翻页切片阅读；
+   - **严禁 5~6 层子进程蹦床（Subprocess Trampolines）与多层透传包装**：调用链必须扁平直观，确保 Agent 在 1~2 次文件读取内即可看清从入口到核心执行的完整闭环。
+2. **强制模块顶部契约头（Module-Top Agent Invariant Header）**：
+   - 每个核心业务模块文件顶部（前 30 行 Docstring 内）必须包含标准化的四段式契约声明，让 Agent 无需通读数百行实现即可瞬间掌握模块边界：
+     - `[Role]`：一句话明确该模块的单一职责与核心入口；
+     - `[Invariants]`：该模块必须死守的核心业务不变量（如状态机合法流转、缺失数据返回 `None` 而非填 `0`、禁止静默吞错）；
+     - `[Timeouts & Locks]`：该模块涉及的锁粒度、SQLite/文件锁策略与内外层超时算术关系（`outer_timeout >= sum(inner_budgets) + cleanup_grace`）；
+     - `[Side-Effect Policy]`：外部副作用边界（纯内存计算、幂等本地状态自愈、或需记录 `unknown` 回执的不可逆外部写入）。
+3. **注释原则：写清“业务不变量与硬件/协议边界（Why & Invariants）”，严禁为过度防御写借口**：
+   - **必须写注释的地方**：非显而易见的昇腾硬件行为（如 A3 910C 双 Die 拓扑下 `8 NPU × 2 Die = Phy-ID 0..15` 映射规则）、跨进程/容器协议边界（如 Linux `/proc` 跨容器 PID 命名空间排空、`SIGTERM -> SIGKILL` 排水宽限期算术）、以及核心领域不变量；
+   - **严禁写注释的地方**：严禁复述代码字面意思，严禁编写长篇大论替“假想敌防御分支”“冗余兜底状态”找合理化借口（遇到需要靠大段注释辩解的防御性累赘代码，应直接连代码带注释一并删掉重写）。
+
 ---
 
 ## 三、开发 PR 提交前自查清单（Pre-PR Review）
@@ -119,5 +134,6 @@ MindIE Agent 旗下所有仓库的代码、配置、依赖、CI 与文档改动�
 | **10. 超时预算与算术一致性** | 新增或修改的超时是否满足**“外层预算 ≥ 内层步骤总和 + 收尾排水宽限期（如 `SIGTERM->SIGKILL` / `inventory`）”**？是否消除了热路径亚秒级（`<1s`）SQLite 锁误杀、外部子进程 `timeout=None` 无限等待、握手脱离 `deadline` 以及 `timeout N cmd \|\| cmd` 超时二次裸跑？ |
 | **11. 反过度防御性编程（`v0.0.2` 四大铁律）** | 是否严格遵守 `v0.0.2` 四大铁律：（1）零热路径 SQL `.owner`/Schema 反射自检；（2）仅不可逆外部写用 `unknown`，本地状态零单向自锁死（无永久 `fault`/`suppressed`/`TaskRootBusy`）；（3）零跨仓复制 `*_fallback.py`/`*_bootstrap.py` 与 Win32 ACL 繁文缛节（统一 `os.replace()`）；（4）零 `inspect.signature` 内部签名锁死与巨型内嵌 Python 字符串（远端 worker 独立 `.py` 模块）？ |
 | **12. 分级测试有效性** | 新增测试是否验证真实核心业务与领域质量，而非测防御性 `chmod`/`symlink`/`ValueError` 假想敌、替静默吞错背书、覆写生产脚本或 grep 文档？是否符合 Tier 0 (`<5s`) ~ Tier 3 耗时预算与常备 A2/A3 真机无损验证要求？ |
+| **13. Agent-Native 代码与注释规范** | 核心模块是否保持精炼（单次 `view_file` 800 行友好、无多层子进程蹦床）并在顶部前 30 行声明 `[Role]`/`[Invariants]`/`[Timeouts & Locks]`/`[Side-Effect Policy]` 契约头？注释是否聚焦业务不变量与硬件/协议边界（如 A3 双 Die `Phy-ID`），而非替防御性假想敌代码写借口？ |
 
 提交开发 PR 时，请在 PR 描述中附上简明的 `## 设计原则 Review` 小结，记录本次改动的自查结论、发现并修复的问题以及实际验证方式。

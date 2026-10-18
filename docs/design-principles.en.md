@@ -99,6 +99,21 @@ See [Tiered Testing Architecture & Case Design Guidelines](testing-architecture.
    - **Tier 2 (Standing A2/A3 NPU Non-Destructive Live Integration `@pytest.mark.live_npu`, `< 25s`)**: Connects directly to the standing A2 (`173.125.1.2`) and A3 (`192.168.13.165` / `.156` / `.154`) clusters using isolated sandbox directories (e.g., `state_dir="/tmp/mindie-npu-test-<uuid>"`) without disturbing active workloads; routinely verifies live `npu-smi` probing, multi-Die `Phy-ID` mapping, Docker container pass-through, Linux `/proc` process-tree draining, and lease anti-preemption.
    - **Tier 3 (End-to-End Host CLI & `mindie-bench` Live Canary Acceptance, `< 90s`)**: Drives real host CLIs and `mindie-bench` Canary tasks to verify the complete loop.
 
+### 17. Agent-Native Coding & Commenting Standards (100% Agent-Maintained Codebase)
+All 11 repositories in the MindIE Agent ecosystem are **100% read, evolved, and maintained by coding Agents**. Code structure and comments must be natively optimized for Agent attention and tool windows (such as the 800-line single `view_file` window):
+1. **Module Size & Context-Window Friendliness**:
+   - Keep core business modules cohesive and concise—targeting **under 800 lines per file** so a single `view_file` call captures the entire module without multi-page slicing caused by defensive boilerplate bloat;
+   - **Ban 5–6 layer subprocess trampolines and pass-through wrappers**: Keep call graphs flat so an Agent can trace end-to-end execution from entrypoint to core logic in 1–2 file reads.
+2. **Mandatory Module-Top Agent Invariant Header**:
+   - Every core module must begin (within its first 30 lines) with a standardized four-part docstring contract so an Agent immediately understands module boundaries without scanning hundreds of lines:
+     - `[Role]`: Single-sentence statement of the module's responsibility and primary entrypoints;
+     - `[Invariants]`: Core business invariants enforced by the module (e.g., valid state transitions, returning `None` rather than zero-filling missing data, no silent fallbacks);
+     - `[Timeouts & Locks]`: Lock granularity, SQLite/file lock policy, and timeout arithmetic hierarchy (`outer_timeout >= sum(inner_budgets) + cleanup_grace`);
+     - `[Side-Effect Policy]`: External side-effect boundary (pure in-memory computation, idempotent local self-healing state, or irreversible external writes requiring `unknown` receipts).
+3. **Commenting Principles: Document Why & Invariants, Never Defensive Excuses**:
+   - **What to comment**: Non-obvious Ascend hardware behaviors (e.g., A3 910C dual-Die topology where `8 NPU × 2 Die = Phy-ID 0..15`), cross-process/container protocol boundaries (e.g., Linux `/proc` container PID namespace draining, `SIGTERM -> SIGKILL` grace arithmetic), and domain invariants;
+   - **What never to comment**: Never restate what the code literally does, and never write paragraphs rationalizing imaginary-enemy defensive branches or fallback shims (if defensive bloat requires a long comment to justify its existence, delete both the code and the comment).
+
 ---
 
 ## Part 3: Pre-PR Design Principles Checklist
@@ -119,5 +134,6 @@ Every development PR across all MindIE Agent repositories (covering code, config
 | **10. Timeout Arithmetic & Bounds** | Do all new/modified timeouts satisfy **`outer_timeout >= sum(inner_budgets) + cleanup_grace` (e.g., `SIGTERM->SIGKILL` / `inventory` drain)**? Are sub-second (`<1s`) SQLite lock guillotines, unbounded `timeout=None` subprocess calls, pre-`deadline` handshakes, and `timeout N cmd \|\| cmd` re-runs eliminated? |
 | **11. Anti Over-Defensive Programming (`v0.0.2` Four Iron Rules)** | Does the change strictly obey the `v0.0.2` Four Iron Rules: (1) zero hot-path SQL `.owner`/Schema reflection checks; (2) `unknown` reserved strictly for irreversible external writes, with zero local one-way self-bricking (`fault`/`suppressed`/`TaskRootBusy`); (3) zero cross-repo copy-pasted `*_fallback.py`/`*_bootstrap.py` or Win32 ACL ceremonies (standard `os.replace()`); (4) zero `inspect.signature` internal parameter locks or giant inline Python string blobs (standalone `.py` remote workers)? |
 | **12. Tiered Test Validity** | Do new tests verify real business/domain quality rather than defensive `chmod`/`symlink`/`ValueError` paranoia, silent-fallback assertions, production-script tampering, or doc-grepping, while meeting Tier 0 (`<5s`) – Tier 3 budgets and live A2/A3 NPU rules? |
+| **13. Agent-Native Code & Comments** | Are core modules concise (`< 800` lines for single-window `view_file` reads, no multi-layer subprocess trampolines) with a Module-Top Agent Invariant Header (`[Role]`, `[Invariants]`, `[Timeouts & Locks]`, `[Side-Effect Policy]`) in the first 30 lines? Do comments explain business invariants and hardware/protocol quirks (e.g., A3 dual-Die `Phy-ID`) rather than excusing defensive paranoia? |
 
 Include a concise `## 设计原则 Review` (Design Principles Review) summary in every development PR description documenting the reviewed commit, conclusions, fixes applied, and verification performed.

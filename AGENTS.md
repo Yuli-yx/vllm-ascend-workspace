@@ -24,6 +24,10 @@ Shared runtime components live in `knowledge`, `remote-dev`, `diagnostics`, `npu
      - **Tier 1 (Local Component Contract & Process Boundary Tests, `< 15s`)**: Reuses session-scoped pre-built Git/SQLite templates to verify cross-process locks, `python -I` isolated startup, and millisecond injectable timeout cleanup (no in-test `pip install` or 10MB `fsync` barrages).
      - **Tier 2 (Standing A2/A3 NPU Non-Destructive Live Integration `@pytest.mark.live_npu`, `< 25s`)**: Connects directly to standing A2 (`173.125.1.2`) and A3 (`192.168.13.165` / `.156` / `.154`) clusters using isolated sandbox directories (e.g., `state_dir="/tmp/mindie-npu-test-<uuid>"`) without disturbing active workloads to verify live `npu-smi` probing, multi-Die `Phy-ID` mapping, Docker container pass-through, Linux `/proc` process-tree draining, and lease anti-preemption.
      - **Tier 3 (End-to-End Host CLI & `mindie-bench` Live Canary Acceptance, `< 90s`)**: Drives real host CLIs and `mindie-bench` Canary tasks for closed-loop verification.
+- **Agent-Native Coding & Commenting Standards (Principle 17 — 100% Agent-Maintained Codebase)**:
+  1. **Module Size & Context-Window Friendliness**: Keep core modules concise and cohesive (target `< 800` lines per file so a single `view_file` call loads the full module); ban 5–6 layer subprocess trampolines and pass-through wrappers.
+  2. **Mandatory Module-Top Agent Invariant Header**: Every core module must declare `[Role]`, `[Invariants]`, `[Timeouts & Locks]`, and `[Side-Effect Policy]` within its first 30 lines.
+  3. **Why & Invariants over Defensive Excuses**: Comments must explain business invariants, protocol boundaries, and non-obvious hardware behaviors (e.g., Ascend A3 dual-Die `Phy-ID` `0..15` mapping or Linux `/proc` container PID draining)—never restate literal code or rationalize imaginary-enemy defensive checks.
 
 ## 2. Progressive Disclosure Map (Read Only When Triggered)
 
