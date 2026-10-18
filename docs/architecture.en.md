@@ -20,7 +20,7 @@ MindIE Agent upgrades your existing AI coding CLI (**Claude Code**, **OpenAI Cod
   - **Manual `/mindie-agent` Trigger (Knowledge, Experience & Skill System)**: When troubleshooting Ascend workloads, adapting operators, or tuning inference, type `/mindie-agent` (or `$mindie-agent` in Codex; DSH uses its native `/mindie-agent` user gesture) followed by your problem description to invoke the Ascend Skill workflow, search verified historical experience packages, and bind the session's experience loop—staying completely out of the way during ordinary non-Ascend coding.
   - **Default Auto-Trigger for `remote-dev` (Remote Ascend Execution)**: `remote-dev` is registered as an always-ready MCP server. Whenever you mention a remote host, container, or NPU command in normal conversation, your Agent automatically invokes `remote-dev` for remote file I/O, patching, and background job execution without needing any slash command.
 - **Configure once, persist across sessions**: After setting your contribution preference, public target repository, and project scope once, eligible tasks associate automatically. Historical experience is purely advisory reference material for the Agent—never a mandatory step.
-- **Hard Prerequisite: Stable GitHub Channel (`gh` CLI) & Two-Stage Scoped Fork Policy**: Plugin marketplace fetches, locked release verification, `knowledge-vllm-ascend` sync, automated knowledge PR publication (via `gh api` and `!gh auth git-credential`), and opt-in fault reporting all rely on an authenticated `gh` (GitHub CLI) channel. The DSH `0.0.1` read-only adapter is the exception: it enables none of those paths and therefore does not require `gh`. Because the `@mindie-agent` organization hosts 10+ repositories, we enforce a **clean, on-demand Two-Stage Fork Policy**: (1) **Install Time**: After verifying `gh auth status` and `gh auth setup-git`, the Agent Auto-Install Playbook **Stars** and **Forks** (`--clone=false`) **only** the main entry repository `mindie-agent/mindie-agent` (never mass-forking individual plugin or knowledge repos during installation); (2) **When Community Knowledge Contribution Is Enabled (On-Demand)**: Only when the user explicitly opts into contributing to a target public knowledge repository (such as `mindie-agent/knowledge-vllm-ascend`) does the Agent **Star** and **Fork** that specific knowledge repository on demand and bind `fork` (`<GH_USER>/<repo>`) for cross-fork PR publishing.
+- **Hard Prerequisite: Stable GitHub Channel (`gh` CLI) & Two-Stage Scoped Fork Policy**: Plugin marketplace fetches, locked release verification, `knowledge-vllm-ascend` sync, automated knowledge PR publication (via `gh api` and `!gh auth git-credential`), and opt-in fault reporting all rely on an authenticated `gh` (GitHub CLI) channel. Because the `@mindie-agent` organization hosts 10+ repositories, we enforce a **clean, on-demand Two-Stage Fork Policy**: (1) **Install Time**: After verifying `gh auth status` and `gh auth setup-git`, the Agent Auto-Install Playbook **Stars** and **Forks** (`--clone=false`) **only** the main entry repository `mindie-agent/mindie-agent` (never mass-forking individual plugin or knowledge repos during installation); (2) **When Community Knowledge Contribution Is Enabled (On-Demand)**: Only when the user explicitly opts into contributing to a target public knowledge repository (such as `mindie-agent/knowledge-vllm-ascend`) does the Agent **Star** and **Fork** that specific knowledge repository on demand and bind `fork` (`<GH_USER>/<repo>`) for cross-fork PR publishing.
 - **Domain focus**: Our initial focus domain is `vLLM` / `vLLM-Ascend` inference and operator engineering, designed so additional domains can plug in cleanly using the same package architecture.
 
 ---
@@ -32,15 +32,15 @@ MindIE Agent uses a clean, decoupled architecture across **native Harness plugin
 | Component / Repository | Core Responsibility |
 | --- | --- |
 | [`mindie-agent`](https://github.com/mindie-agent/mindie-agent) (this repo) | Overall architecture, domain boundaries, engineering design principles, cross-component contracts, and unified release records |
-| [`mindie-agent-cc`](https://github.com/mindie-agent/mindie-agent-cc), [`mindie-agent-codex`](https://github.com/mindie-agent/mindie-agent-codex), [`mindie-agent-kimi`](https://github.com/mindie-agent/mindie-agent-kimi), [`mindie-agent-dsh`](https://github.com/mindie-agent/mindie-agent-dsh) | **Native Harness Plugins**: Host task identity verification, first-time setup, Hook bridging, public conversation projection, native lightweight model invocation, plugin installation, and silent background updates (DSH `0.0.1` composes only read-only knowledge and the official `remote-dev`; no capture, contribution, or reporting) |
-| [`knowledge`](https://github.com/mindie-agent/knowledge) | **Knowledge & Experience Engine**: Durable admission cursors, deterministic privacy redaction, task package assembly, two-layer hybrid search (BM25 + semantic), usefulness feedback, and automated PR creation |
+| [`mindie-agent-cc`](https://github.com/mindie-agent/mindie-agent-cc), [`mindie-agent-codex`](https://github.com/mindie-agent/mindie-agent-codex), [`mindie-agent-kimi`](https://github.com/mindie-agent/mindie-agent-kimi), [`mindie-agent-dsh`](https://github.com/mindie-agent/mindie-agent-dsh) | **Native Harness Plugins**: Host task identity verification, first-time setup, Hook bridging, public conversation projection, native lightweight model invocation, plugin installation, and silent background updates |
+| [`knowledge`](https://github.com/mindie-agent/knowledge) | **Knowledge & Experience Engine**: Durable admission cursors, deterministic privacy redaction, task package assembly, `TechnicalTokenizerV1`-based ReMe lexical & file-graph search (BM25 + `StrictFileGraph` + citation lineage merging), usefulness feedback, and automated PR creation |
 | [`knowledge-vllm-ascend`](https://github.com/mindie-agent/knowledge-vllm-ascend) | **Public Domain Knowledge Corpus**: Reviewed, redacted `vLLM-Ascend` Markdown knowledge packages distributed via GitHub for incremental client sync |
 | [`remote-dev`](https://github.com/mindie-agent/remote-dev) | **Remote Ascend Execution Substrate**: SSH-backed remote twins for file I/O, AST/symbol outlines, line-scoped editing, patching, grep/glob search, managed long-running background jobs, cancellation, and artifact syncing—maintaining full native tool & parameter parity across 6 Harnesses (Codex, Claude Code, Cursor, Kimi Code, DSH, Antigravity) while consuming `coordinator`'s synchronized `endpoints.json` and Endpoint Resolver |
 | [`coordinator`](https://github.com/mindie-agent/coordinator) | **Upgraded SSH & Remote Ascend Environment Manager (Agent-Facing)**: Owns the shared machine inventory (`machines.json` -> auto-synced `endpoints.json`), SSH key bootstrap & multi-node container mesh (`mindie_hosts`), container binding & provisioning (`mindie_container`), agentless NPU/server/mount probing & capacity ranking (`mindie_probe`), lightweight NPU/port lease coordination (`mindie_lease`), and Git-snapshot task execution (`mindie_run`) |
 | [`npu-top`](https://github.com/mindie-agent/npu-top) | **Visual Cluster Telemetry Dashboard (Human-Facing)**: Reads `coordinator`'s `machines.json` to serve a live local Web UI (`127.0.0.1:8788`) and 90-day SQLite utilization heatmaps for humans; Agents query NPU/server/mount status directly via `coordinator`'s `mindie_probe` without requiring the human dashboard server |
 | [`diagnostics`](https://github.com/mindie-agent/diagnostics) | **Structured Diagnostics & Fault Reporting**: Bounded local structured logs, actionable fault IDs, and opt-in, deduplicated GitHub Issue reporting |
 
-All Harness plugins share the exact same `knowledge`, `coordinator`, `remote-dev`, and `diagnostics` runtime packages; only host-specific session identity and transcript parsing live inside each plugin adapter. DSH `0.0.1` reuses read-only knowledge and the official `remote-dev` server; it has no Stop capture, experience contribution, or fault reporting yet, so the experience loop below applies only to adapters that implement capture.
+All Harness plugins share the exact same `knowledge`, `coordinator`, `remote-dev`, and `diagnostics` runtime packages; only host-specific session identity and transcript parsing live inside each plugin adapter.
 
 ---
 
@@ -53,8 +53,8 @@ flowchart LR
     A["Everyday Ascend Engineering Session"] --> C{"Experience sharing enabled for this project?"}
     C -->|Not configured or disabled| R["Return clear status only when queried"]
     C -->|Configured and enabled| H["Fast Stop Hook<br/>Commits task cursor in milliseconds"]
-    H --> L["Extract public dialogue & run deterministic redaction<br/>Save immutable Markdown blocks"]
-    L --> M["Host's lightweight native model generates block titles,<br/>summaries & short task navigation (PACKAGE.md)"]
+    H --> L["Extract public dialogue & run deterministic redaction<br/>Save 16KB-chunked immutable Markdown blocks"]
+    L --> M["Host's lightweight native model generates block titles,<br/>summaries & short task navigation (tasks/&lt;32-char task hash&gt;/index.md)"]
     M --> P["Assemble complete task package<br/>Automatically open GitHub PR"]
     P --> B["Grok Bot reviews safety & compliance"]
     B --> K["Merge into public corpus<br/>(knowledge-vllm-ascend)"]
@@ -70,20 +70,20 @@ flowchart LR
 2. **Millisecond Stop Hooks**: When a turn finishes, the Stop Hook simply records a lightweight durable admission cursor in SQLite and exits immediately with neutral output so it never blocks your terminal or triggers extra model turns.
 3. **100% deterministic body redaction; small models only build the table of contents**:
    - Saved blocks contain only **user input**, **public assistant progress**, and **final answers** (stripping raw tool payloads, hidden reasoning traces, and system prompts). Before touching disk or any model, Gitleaks and deterministic privacy rules strip secrets, private IPs, SSH `user@host` strings, and local home paths.
-   - The adapter's lightweight native model (via LangMem) **only generates titles, search summaries, and the `PACKAGE.md` outline—it never rewrites or truncates the primary conversation blocks**.
+   - The adapter's lightweight native model **only generates titles, search summaries, and the `tasks/<32-char task hash>/index.md` outline—it never rewrites or truncates the primary conversation blocks**.
 
 ---
 
 ## 4. Knowledge Package Format & Local State Protection
 
-Every task package is stored under `tasks/<task_id>/` using plain, readable Markdown:
-- `PACKAGE.md`: Contains the overall task summary, applicability `conditions`, and an ordered table of blocks.
-- `materials/0001.md`, `0002.md`...: Immutable, sequentially numbered conversation blocks. When searching, an Agent inspects `PACKAGE.md` first and loads only the specific block(s) it needs rather than flooding its context window with an entire transcript.
+Tracked locally via `current.json` dual-channel pointers (`draft` / `feed`), every task package is stored under `tasks/<32-char task hash>/` using plain, readable Markdown:
+- `index.md`: Top-level `mindie-material-task/1` manifest (embedding the `mindie-entry/3` navigation directory) containing the overall task summary, applicability `conditions`, and an ordered table of blocks.
+- `blocks/<64-char block hash>.md`: Immutable, 16KB-chunked conversation blocks (`mindie-material-block/1`). When searching, an Agent inspects `index.md` first and loads only the specific block(s) it needs rather than flooding its context window with an entire transcript.
 
 Under the hood:
 - **Markdown files are the sole source of truth** for content;
 - **SQLite** stores compact cursors, queues, consent bindings, and external operation receipts;
-- **ReMe** maintains an in-memory search index that can be rebuilt from the Markdown files at any time. If SQLite is missing or corrupted, the runtime reports a clear error while preserving all existing Markdown files rather than treating the error as a "fresh install" and wiping local data.
+- **ReMe** maintains a derived search index built on `TechnicalTokenizerV1` (tailored for Ascend/vLLM technical identifiers), combining **BM25 lexical search + Markdown heading/file graph (`StrictFileGraph`) + citation lineage merging** (`blocks.sqlite3` incremental checkpoints, without requiring heavy local Embedding vector computation) that can be rebuilt from the Markdown files at any time. If SQLite is missing or corrupted, the runtime reports a clear error while preserving all existing Markdown files rather than treating the error as a "fresh install" and wiping local data.
 
 ---
 

@@ -1,7 +1,7 @@
 # MindIE Agent
 
 This repository owns product architecture, domain boundaries, and entry documentation (`docs/`).
-Native Harness plugins live in `mindie-agent-codex`, `mindie-agent-cc`, and `mindie-agent-kimi`.
+Native Harness plugins live in `mindie-agent-codex`, `mindie-agent-cc`, `mindie-agent-kimi`, and `mindie-agent-dsh`.
 Shared runtime components live in `knowledge`, `remote-dev`, `diagnostics`, `npu-top`, and `coordinator`.
 
 ## 1. Core Operating Rules (Always Active)
@@ -10,16 +10,27 @@ Shared runtime components live in `knowledge`, `remote-dev`, `diagnostics`, `npu
 - **Inner-Loop Efficiency (Principle 1 — Total Cost First)**:
   - Edit files directly in the active checkout and verify only the affected scope.
   - Never invent intermediate freeze steps, duplicate snapshot directories, or `readback.json`/`restoration.json`/`shadow.json` audit ceremonies during routine development.
-- **Transparency & State Honesty (Principle 9)**:
+- **Transparency, No Silent Fallbacks & State Honesty (Principle 9 & 14)**:
   - Keep implementation status, target design, and real acceptance evidence distinct.
-  - Errors must remain visible to the caller; distinguish `completed`, `failed`, and `unknown` external effects. Never mask a failure or blindly retry an uncertain external write.
+  - Errors must remain visible to the caller; distinguish `completed`, `failed`, and `unknown` external effects. Never mask a failure as `{}` / `"active"` / `exit 0`, never let `except OSError:` swallow `TimeoutError`, never overwrite a succeeded remote result with `isError=True` due to a local receipt-accounting timeout, and never blindly retry an uncertain external write.
+- **Timeout Arithmetic & Anti Over-Defensive Programming (Principle 15)**:
+  - Enforce `outer_timeout >= sum(inner_budgets) + cleanup_grace` (e.g., `STOP_DRAIN >= STOP_GRACE + 3s`, verifier `outer_timeout >= inner_timeout + inventory_grace`, independent budgets for multi-stage SSH mux diagnostics, and never `timeout N cmd || cmd`).
+  - Eliminate sub-second (`< 1s`) SQLite lock guillotines (use WAL + `3s–5s` timeouts) and unbounded `timeout=None` subprocess/handshake waits.
+  - Never build one-way self-bricking state machines (`fault`/`suppressed` on recoverable drift or untracked container files), repetitive full-tree `.so`/`.owner` hashing on hot paths, `inspect.signature` parameter locks, or copy-pasted `*_fallback.py`/`*_bootstrap.py` shadow state machines.
+- **Testing Design Guidelines (No Filler, Silent-Fallback, or Prose-Grep Tests; Standing Live A2/A3 NPU Tiered Verification)**:
+  1. **Every Test Must Earn Its Keep**: Never write filler tests that merely check Python types/defensive `ValueError` branches, repeatedly test `chmod`/`symlink` hypotheticals, ratify silent error swallowing (`exit 0`/`{}` on failure), assert static constant/enum string lists, or regex-grep `README.md`/`SKILL.md` prose; never tamper with production scripts or fabricate `MagicMock` payloads that diverge from real server/hardware schemas to fake a pass.
+  2. **Four-Tier Testing Pyramid (Tier 0 – Tier 3, Standing A2/A3 Ascend NPU Environment)**:
+     - **Tier 0 (Pure In-Memory Core Logic Unit Tests, `< 5s`)**: Zero subprocesses, zero network, zero `sleep`; covers parsers (backed by real A2 910B / A3 910C / A5 hardware Golden Captures), state-machine transitions (`InMemoryHostQueue` and real in-memory loops), redaction rules, domain retrieval precision/recall, and protocol translation.
+     - **Tier 1 (Local Component Contract & Process Boundary Tests, `< 15s`)**: Reuses session-scoped pre-built Git/SQLite templates to verify cross-process locks, `python -I` isolated startup, and millisecond injectable timeout cleanup (no in-test `pip install` or 10MB `fsync` barrages).
+     - **Tier 2 (Standing A2/A3 NPU Non-Destructive Live Integration `@pytest.mark.live_npu`, `< 25s`)**: Connects directly to standing A2 (`173.125.1.2`) and A3 (`192.168.13.165` / `.156` / `.154`) clusters using isolated sandbox directories (e.g., `state_dir="/tmp/mindie-npu-test-<uuid>"`) without disturbing active workloads to verify live `npu-smi` probing, multi-Die `Phy-ID` mapping, Docker container pass-through, Linux `/proc` process-tree draining, and lease anti-preemption.
+     - **Tier 3 (End-to-End Host CLI & `mindie-bench` Live Canary Acceptance, `< 90s`)**: Drives real host CLIs and `mindie-bench` Canary tasks for closed-loop verification.
 
 ## 2. Progressive Disclosure Map (Read Only When Triggered)
 
 Do not preload all documentation into context. Read only the document matching your current task:
 
 - **Architecture & Domain Boundaries** → [`docs/architecture.md`](docs/architecture.md)
-- **9 Product & Engineering Principles** → [`docs/design-principles.md`](docs/design-principles.md)
+- **Product, Engineering & Testing Principles** → [`docs/design-principles.md`](docs/design-principles.md) & [`docs/testing-architecture.md`](docs/testing-architecture.md)
 - **Harness Plugin Boundary, Hooks & Lifecycle** → [`docs/harness-boundary-and-lifecycle.md`](docs/harness-boundary-and-lifecycle.md) & [`docs/native-runtime-reuse.md`](docs/native-runtime-reuse.md)
 - **Knowledge Flywheel & Privacy Redaction** → [`docs/knowledge-system.md`](docs/knowledge-system.md)
 - **Diagnostics & Issue Reporting** → [`docs/diagnostics-and-reporting.md`](docs/diagnostics-and-reporting.md)

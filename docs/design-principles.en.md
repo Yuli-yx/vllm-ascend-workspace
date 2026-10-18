@@ -64,10 +64,38 @@ As MindIE Agent matured across hosts and operating systems, we codified five ope
 - **Zero hot-path blocking**: More than 24 hours after the last successful check, natural usage triggers an asynchronous background check and runtime build; everyday tool calls perform only a fast local timestamp check.
 - **Atomic cutover when idle**: After downloading and building the locked `uv` environment outside the active runtime, the updater waits until no active RPC, capture, or indexing job is running, acquires the exclusive lock, retires the old worker, and atomically switches the active installation binding without user prompts or manual session reloads. See [Release Compatibility & Silent Update](release-compatibility-and-update.en.md).
 
-### 14. Fail-Visible Semantics and `unknown` Side-Effect Protection
-- **No silent degradation**: Never catch an exception and silently return empty results, skip corrupted state, or serve stale cache if doing so alters the meaning of the caller's request.
+### 14. Fail-Visible Semantics, No Silent Fallbacks, and `unknown` Side-Effect Protection
+- **No silent fallbacks or fake success**:
+  - Never catch an exception and silently return `{}`, empty lists, skip corrupted state, or disguise a failure as `"status": "active"` / `exit 0`;
+  - **Never let secondary bookkeeping overwrite primary success**: When a remote NPU command or core operation has already succeeded and returned valid output, a local SQLite receipt lock timeout or background grandchild pipe cleanup delay must preserve the primary result and attach a diagnostic warning—never flip a succeeded call to `isError = True`;
+  - **Guard against exception hierarchy swallowing (`TimeoutError` $\subset$ `OSError`)**: Always handle `TimeoutError` explicitly before `except OSError:` in Python 3 so self-raised timeouts are never silently swallowed as generic file I/O errors.
 - **Protect uncertain (`unknown`) external writes**: If a paid model call or external Git/PR write times out or loses its receipt, record it as `unknown` and reconcile read-only against the remote target before any future write—never blindly retry it as if it had not run.
 - **Protocol safety never hides business faults**: A Hook may exit cleanly so the host model does not loop, but any underlying capture or service failure must still be surfaced through the host's warning field or the next tool call's diagnostic status.
+
+### 15. Timeout Arithmetic Consistency & Anti Over-Defensive Programming
+1. **Timeout Arithmetic Invariants**:
+   - **Outer timeout must strictly exceed inner step budgets plus cleanup grace (`outer_timeout >= sum(inner_budgets) + cleanup_grace`)**:
+     - Never wrap a `30s` inner command inside a `1.5s` `HOOK_TOTAL`, set local `STOP_DRAIN (2.0s) == remote STOP_GRACE (2.0s)` (failing locally at the exact millisecond `SIGKILL` is sent), or set verifier `deadline = timeout - 0.1s` without leaving time for `finally: inventory()` (which falsely triggers `UnknownExternalEffects`);
+     - Multi-stage diagnostics (e.g., Stage 1 with SSH ControlMaster and Stage 2 bypassing ControlMaster) must have independent timeout budgets so a hung Stage 1 never starves Stage 2;
+     - Never write `timeout 10 cmd || cmd` in shell scripts (when `timeout` exits with `124` on a hung driver, `||` immediately runs `cmd` without a timeout and hangs forever).
+   - **Eliminate bimodal timeout extremes (no sub-second hot-path guillotines or unbounded `timeout=None`)**:
+     - **No sub-second (`< 1s`) SQLite lock timeouts**: Multi-thread/cross-process SQLite locks must never use `100ms–250ms` micro-timeouts (which abort normal queries or permanently drop `Stop` session captures under normal indexing load); enable WAL mode and use `3.0s–5.0s` timeouts;
+     - **No unbounded `timeout=None` on subprocesses or handshakes**: Every external subprocess (`gitleaks`, summary commands, candidate validation, `docker inspect/top` under host locks) must specify an explicit bounded timeout, and RPC handshakes (`ready.wait`) must be governed by `deadline` from function entry.
+2. **Anti Over-Defensive Self-Bricking**:
+   - **No one-way self-bricking state machines**: Recoverable config drift, transient upgrade slowdowns, or untracked scratch files (`git status --porcelain`) must never permanently lock the system into an unrecoverable `fault`/`suppressed` state or block valid container execution;
+   - **No repetitive full-tree hashing or signature-reflection locks**: Never re-`stat` `.owner` on every `SELECT`, hash every `.so` file 3–4 times per task, lock internal function parameter defaults with `inspect.signature` in production probes, or copy-paste hundreds of lines of shadow `*_fallback.py` / `*_bootstrap.py` state machines across repositories.
+
+### 16. Testing Design Guidelines: Eliminate Filler Tests, Embrace Tiered Live A2/A3 NPU Verification
+See [Tiered Testing Architecture & Case Design Guidelines](testing-architecture.en.md) for the complete specification:
+1. **Test Validity Redlines (Every Test Must Earn Its Keep)**:
+   - **No defensive paranoia or prose-matching tests**: Never write tests that merely check Python types/defensive `ValueError` branches, repeatedly test `chmod 0o777`/`symlink` hypothetical attacks, assert static constant/enum string lists, or regex-grep `README.md`/`SKILL.md` prose;
+   - **Never ratify silent error swallowing in tests**: Never write tests asserting that an underlying failure or timeout returns `exit 0` / `{}` / `"active"`;
+   - **No production-script tampering or deceptive mocks**: Never overwrite production script files (e.g., replacing `admission_ops.py` with fake stubs) in integration tests or fabricate `MagicMock` objects that diverge from real server/hardware schemas.
+2. **Four-Tier Testing Pyramid (Tier 0 – Tier 3, Default Standing A2/A3 Ascend NPU Environment)**:
+   - **Tier 0 (Pure In-Memory Core Logic Unit Tests, `< 5s`)**: Zero subprocesses, zero network, zero `sleep`; covers parsers (backed by real A2 910B / A3 910C / A5 hardware Golden Captures), state-machine transitions (`InMemoryHostQueue` and real in-memory loops), redaction rules, domain retrieval precision/recall, and protocol translation.
+   - **Tier 1 (Local Component Contract & Process Boundary Tests, `< 15s`)**: Reuses session-scoped pre-built Git/SQLite templates to verify cross-process locks, `python -I` isolated startup, and millisecond injectable timeout cleanup (never run network `pip install` or 10MB-scale `fsync` barrages inside tests).
+   - **Tier 2 (Standing A2/A3 NPU Non-Destructive Live Integration `@pytest.mark.live_npu`, `< 25s`)**: Connects directly to the standing A2 (`173.125.1.2`) and A3 (`192.168.13.165` / `.156` / `.154`) clusters using isolated sandbox directories (e.g., `state_dir="/tmp/mindie-npu-test-<uuid>"`) without disturbing active workloads; routinely verifies live `npu-smi` probing, multi-Die `Phy-ID` mapping, Docker container pass-through, Linux `/proc` process-tree draining, and lease anti-preemption.
+   - **Tier 3 (End-to-End Host CLI & `mindie-bench` Live Canary Acceptance, `< 90s`)**: Drives real host CLIs and `mindie-bench` Canary tasks to verify the complete loop.
 
 ---
 
@@ -77,14 +105,17 @@ Every development PR across all MindIE Agent repositories (covering code, config
 
 | Dimension | Review Question |
 |---|---|
-| **1. Total Cost** | What real friction or cost does this change remove? Does it add unnecessary background work, redundant computation, or extra user steps? |
+| **1. Total Cost** | What real friction or cost does this change remove? Does it add unnecessary background work, repetitive full-tree hashing/IO checks, or extra user steps? |
 | **2. Tool Boundary** | Is any toolified logic solving a closed, well-bounded problem rather than freezing open-ended judgment into a rigid flow? |
 | **3. Cognitive Load** | Does the change keep internal state and parameters simple for both users and Agents? |
-| **4. Single Responsibility** | Are module boundaries clean without cross-repo leakage, duplicate state stores, or competing orchestrators? |
+| **4. Single Responsibility** | Are module boundaries clean without cross-repo leakage, duplicate state stores, or copy-pasted `*_fallback.py`/`*_bootstrap.py` shadow state machines? |
 | **5. Informational Skills** | Do Skills remain clear, helpful guides rather than mandatory procedural checklists? |
 | **6. Advisory Knowledge** | Do knowledge entries and feedback remain advisory without mandatory lookups, writes, or truth certification? |
 | **7. On-Demand Activation** | Does everything trigger strictly on demand without unrequested background work or closing rituals? |
 | **8. Reuse & Paired State** | Were host/OS/mature tools reused first? Were replaced implementations deleted while preserving user data, consent, and `unknown` receipts? |
-| **9. Visible Errors** | Do all failure paths report honest, actionable errors without silent fallbacks, fake success, or overwritten primary errors? |
+| **9. Error Visibility & No Silent Fallback** | Do failure paths report honest, actionable errors without `except Exception:` silent `{}` / `"active"` / `exit 0` fallbacks, `except OSError:` swallowing `TimeoutError`, blind retries of `unknown` writes, or local bookkeeping/cleanup timeouts overwriting succeeded remote results? |
+| **10. Timeout Arithmetic & Bounds** | Do all new/modified timeouts satisfy **`outer_timeout >= sum(inner_budgets) + cleanup_grace` (e.g., `SIGTERM->SIGKILL` / `inventory` drain)**? Are sub-second (`<1s`) SQLite lock guillotines, unbounded `timeout=None` subprocess calls, pre-`deadline` handshakes, and `timeout N cmd \|\| cmd` re-runs eliminated? |
+| **11. Anti Over-Defensive Self-Bricking** | Does the change avoid one-way unrecoverable `fault`/`suppressed` lockouts, git-dirty container rejection, `inspect.signature` parameter locks, or heavy hot-path paranoia checks? |
+| **12. Tiered Test Validity** | Do new tests verify real business/domain quality rather than defensive `chmod`/`symlink`/`ValueError` paranoia, silent-fallback assertions, production-script tampering, or doc-grepping, while meeting Tier 0 (`<5s`) – Tier 3 budgets and live A2/A3 NPU rules? |
 
 Include a concise `## 设计原则 Review` (Design Principles Review) summary in every development PR description documenting the reviewed commit, conclusions, fixes applied, and verification performed.

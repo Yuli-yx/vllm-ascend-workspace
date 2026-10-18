@@ -14,12 +14,12 @@ This document explains how MindIE Agent turns real-world Ascend NPU debugging an
 
 1. **Preserve the Complete Primary Conversation—Never Replace It with a Summary**
    - Many memory systems ask an LLM to rewrite a debugging session into a short paragraph, losing the exact stack traces, environment variables, and diagnostic turning points that actually matter.
-   - In MindIE Agent, extracting and redacting public conversation turns is done entirely by **deterministic code** and saved as immutable, ordered Markdown blocks (`materials/0001.md`, `0002.md`, ...). No LLM ever rewrites the body text or truncates the middle of a long task.
+   - In MindIE Agent, extracting and redacting public conversation turns is done entirely by **deterministic code** and saved as immutable, 16KB-chunked Markdown blocks (`tasks/<32-char task hash>/blocks/<64-char block hash>.md`). No LLM ever rewrites the body text or truncates the middle of a long task.
 2. **Use a Lightweight Native Model Only to Build the "Table of Contents"**
-   - So Agents don't have to load massive transcripts into context, each Harness plugin uses its lightweight native model (with LangMem) strictly to generate block titles, search summaries, and a task-level navigation manifest (`PACKAGE.md`).
-   - When searching, the Agent reads `PACKAGE.md` first to see the big picture, then loads only the specific block(s) it needs (e.g., `#0002`).
-3. **Two-Layer Storage Isolation with One Unified Format**
-   - Curated community knowledge (`public/`) and private local task records (`local/`) live in separate directories on disk but share the exact same `mindie-material-task/1` package format and rebuildable ReMe search index.
+   - So Agents don't have to load massive transcripts into context, each Harness plugin uses its lightweight native model strictly to generate block titles, search summaries, and a task-level navigation manifest (`tasks/<32-char task hash>/index.md`, a top-level `mindie-material-task/1` manifest embedding the `mindie-entry/3` navigation directory).
+   - When searching, the Agent reads `index.md` first to see the big picture, then loads only the specific block(s) it needs (`blocks/<64-char block hash>.md`).
+3. **Dual-Channel Pointer Isolation (`draft` / `feed`) with One Unified Format**
+   - Curated community knowledge (`feed`) and private local task drafts (`draft`) are tracked locally via dual-channel pointers in `current.json`, sharing the exact same `mindie-material-task/1` package format and rebuildable ReMe search index (`blocks.sqlite3` incremental checkpoint).
 4. **Fail-Closed Privacy & Explicit Consent**
    - Nothing is collected without explicit project-scope consent. Before any bytes are written to disk, sent to the indexing model, or proposed in a public PR, deterministic privacy rules and Gitleaks secret scanning run automatically.
 5. **Advisory Knowledge with Real-World Usefulness Feedback**
@@ -33,14 +33,14 @@ This document explains how MindIE Agent turns real-world Ascend NPU debugging an
 flowchart TB
     T["Verified Host Session Transcript"] --> P["1. Deterministic Public Message Extraction<br/>(Keep only user input, public progress & final answer)"]
     P --> R["2. Deterministic Privacy Rules + Gitleaks Redaction"]
-    R --> B["3. Write Immutable Markdown Blocks<br/>(materials/0001.md, 0002.md...)"]
-    B --> I["4. Lightweight Native Model Builds Navigation<br/>(Update PACKAGE.md & advance SQLite cursor)"]
-    I --> L["5. Update Local Rebuildable ReMe Index<br/>(BM25 + Hybrid Search)"]
+    R --> B["3. Write 16KB-Chunked Immutable Markdown Blocks<br/>(tasks/&lt;32-char task hash&gt;/blocks/&lt;64-char block hash&gt;.md)"]
+    B --> I["4. Lightweight Native Model Builds Navigation<br/>(Update tasks/&lt;32-char task hash&gt;/index.md & advance SQLite cursor)"]
+    I --> L["5. Update Local Rebuildable ReMe Index (blocks.sqlite3)<br/>(TechnicalTokenizerV1 BM25 + StrictFileGraph + Citation Lineage Merging)"]
     I --> O{"Community Sharing Enabled?"}
     O -->|No (Local Reuse Only)| L
     O -->|Yes| G["6. Automatically Open Public Package PR<br/>(knowledge-vllm-ascend)"]
     G --> Bot["7. Grok Bot Safety & Compliance Review"]
-    Bot --> Sync["8. Incremental Client Sync (public/)"]
+    Bot --> Sync["8. Incremental Client Sync & Update current.json (draft / feed)"]
 ```
 
 ### 2.1 Step 1: Deterministic Public Message Extraction
@@ -54,8 +54,8 @@ flowchart TB
 - **Defense in depth**: Pattern redaction complements explicit consent—only tasks inside the user's authorized project scope are admitted.
 
 ### 2.3 Step 3: Immutable Blocks & Small-Model Navigation
-- Redacted turns are split sequentially into immutable `mindie-material-block/1` files (`materials/0001.md`, `0002.md`, ...).
-- The adapter's lightweight model generates titles, retrieval summaries, and applicability `conditions` for new blocks, updating `PACKAGE.md`.
+- Redacted turns are split along 16KB boundaries into immutable `mindie-material-block/1` files (`tasks/<32-char task hash>/blocks/<64-char block hash>.md`).
+- The adapter's lightweight model generates titles, retrieval summaries, and applicability `conditions` for new blocks, writing the top-level `mindie-material-task/1` manifest at `tasks/<32-char task hash>/index.md` (embedding the `mindie-entry/3` navigation directory) while maintaining `draft` / `feed` dual-channel pointers in local `current.json`.
 - Long tasks advance incrementally via durable cursors. If an indexing model call fails, the saved Markdown blocks remain intact on disk and the unfinished stage is reported honestly without faking completion or blindly retrying uncertain paid calls.
 
 ### 2.4 Step 4: Automated PR Publication & Reconciliation via `gh` and On-Demand Personal Forks
@@ -65,30 +65,31 @@ flowchart TB
 
 ---
 
-## 3. What a Knowledge Package Looks Like (`tasks/<task_hash>/`)
+## 3. What a Knowledge Package Looks Like (`tasks/<32-char task hash>/`)
 
-Both local experience packages and public packages in [`knowledge-vllm-ascend`](https://github.com/mindie-agent/knowledge-vllm-ascend) follow the exact same directory layout:
+Both local draft experience packages (`draft`) and public packages in [`knowledge-vllm-ascend`](https://github.com/mindie-agent/knowledge-vllm-ascend) (`feed`) are tracked locally via `current.json` dual-channel pointers and follow the exact same directory layout under `tasks/<32-char task hash>/`:
 
 ```text
-tasks/<task_hash>/
-├── PACKAGE.md           # Task manifest (mindie-material-task/1 + mindie-entry/3 header, summary & block table)
-└── materials/
-    ├── 0001.md          # Ordered redacted conversation block 1 (mindie-material-block/1)
-    ├── 0002.md          # Ordered redacted conversation block 2
+current.json                                # Local dual-channel pointer (draft / feed)
+tasks/<32-char task hash>/
+├── index.md                                # Top-level mindie-material-task/1 manifest (embeds mindie-entry/3 navigation directory, summary & conditions)
+└── blocks/
+    ├── <64-char block hash>.md             # 16KB-chunked immutable redacted conversation block 1 (mindie-material-block/1)
+    ├── <64-char block hash>.md             # 16KB-chunked immutable redacted conversation block 2
     └── ...
 ```
 
-- **Read the Outline First (`tasks/<task_hash>`)**: Returns `PACKAGE.md` with the overall problem summary, applicability conditions, and block table of contents.
-- **Read Specific Blocks on Demand (`tasks/<task_hash>#0001`)**: Returns that exact block's Markdown body, file hash, and adjacent block pointers so the Agent loads only the context it needs.
+- **Read the Outline First (`tasks/<32-char task hash>`)**: Returns `index.md` (the top-level `mindie-material-task/1` manifest with embedded `mindie-entry/3` navigation directory) containing the overall problem summary, applicability conditions, and block table of contents.
+- **Read Specific Blocks on Demand (`tasks/<32-char task hash>/blocks/<64-char block hash>.md`)**: Returns that exact 16KB immutable block's Markdown body, block hash, and adjacent block pointers so the Agent loads only the context it needs.
 
 ---
 
 ## 4. Authoritative Markdown Storage & Rebuildable Indexes
 
 - **Markdown Is the Source of Truth**:
-  - **Markdown files** on disk are the sole authoritative store for conversation content;
+  - **Markdown files** on disk (`index.md` and `blocks/<64-char block hash>.md`) are the sole authoritative store for conversation content;
   - **SQLite** stores compact cursors, queues, consent bindings, and external operation receipts;
-  - **ReMe** maintains an in-process search index that can be rebuilt from the Markdown files at any time. If SQLite is missing or corrupted, the runtime reports a clear error and protects all existing Markdown files rather than treating it as a fresh install.
+  - **ReMe** maintains a derived search index built on `TechnicalTokenizerV1` (tailored for Ascend/vLLM technical identifiers), combining **BM25 lexical search + Markdown heading/file graph (`StrictFileGraph`) + citation lineage merging** with incremental checkpoints in `blocks.sqlite3`—without requiring heavy local Embedding vector computation. The index can be rebuilt from the Markdown files at any time. If SQLite is missing or corrupted, the runtime reports a clear error and protects all existing Markdown files rather than treating it as a fresh install.
 - **Citations & Feedback**:
-  - Literal citations inside blocks participate in search grouping only when the cited package also matches the current query; citation count never implies official certification.
+  - Literal citations inside blocks participate in citation lineage merging only when the cited package also matches the current query; citation count never implies official certification.
   - Consuming tasks can optionally submit `helpful` or `not_helpful` feedback after real use to improve ranking and guide corpus maintenance.

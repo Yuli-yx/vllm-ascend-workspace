@@ -16,8 +16,8 @@ MindIE Agent does not invent a proprietary chat UI or force you into a custom ta
 | Layer / Module | What It Owns | What It Never Does |
 | --- | --- | --- |
 | **Host Native Plugin Manager** | Downloading, installing, and recording installed plugin packages | Does not replace MindIE Agent's SemVer host-compatibility check |
-| **Harness Plugin Adapters** (`mindie-agent-cc` / `-codex` / `-kimi` / `-dsh`; DSH `0.0.1` composes only read-only knowledge and `remote-dev` for now) | Verifying native task identity, locating trusted transcripts, extracting public dialogue, invoking the host's lightweight native model, and shipping locked dependencies (`uv.lock`) | Never maintains a second knowledge database or duplicate process-supervision state machine |
-| **Shared Knowledge Engine** (`knowledge`) | Managing consent & cursors, running deterministic privacy redaction, coordinating block navigation indexing, serving two-layer search, and tracking PR receipts & recovery | Never imports host-private session tables or guesses task ownership from working directories or timestamps |
+| **Harness Plugin Adapters** (`mindie-agent-cc` / `-codex` / `-kimi` / `-dsh`) | Verifying native task identity, locating trusted transcripts, extracting public dialogue, invoking the host's lightweight native model, shipping locked dependencies (`uv.lock`), and running silent background updates | Never maintains a second knowledge database or duplicate process-supervision state machine |
+| **Shared Knowledge Engine** (`knowledge`) | Managing consent & cursors, running deterministic privacy redaction, coordinating block navigation indexing, serving `TechnicalTokenizerV1`-based ReMe search, and tracking PR receipts & recovery | Never imports host-private session tables or guesses task ownership from working directories or timestamps |
 | **Remote & Diagnostics Components** (`remote-dev` / `diagnostics`) | Providing standalone SSH remote execution/background job management, bounded local logs, and opt-in fault reporting | Never depends on experience capture being enabled, and never truncates user job outputs |
 
 In everyday workflows:
@@ -27,8 +27,6 @@ In everyday workflows:
 ---
 
 ## 2. Task Identity, User Consent, and Capture Scope
-
-> **DSH `0.0.1` boundary**: This adapter provides read-only knowledge retrieval and the official `remote-dev` tool set. It has no Stop capture, experience contribution, fault reporting, or per-session knowledge lease. Knowledge calls use the Host-level `dsh` identity; the consent, exact session attribution, and `gh` publication paths in this section apply only to adapters that implement capture.
 
 ### 2.1 Configure Consent Once—Persist Across Updates
 - **Persistent user preferences**: Your contribution choice, public destination repository, GitHub account, and authorized project scope are saved as persistent user settings decoupled from the installed code version.
@@ -48,11 +46,9 @@ In everyday workflows:
 
 ## 3. Conversation Extraction & Small-Model Indexing
 
-> DSH `0.0.1` does not implement this extraction pipeline. The capture adapter in its engine configuration fails loudly if invoked instead of silently returning empty content.
-
 - **Deterministic public extraction**: Only ordered user input, public assistant progress, and final answers are kept. Raw tool payloads, hidden reasoning traces, system prompts, and duplicate host wrapper events are stripped without truncating long tasks.
 - **Redaction first**: Gitleaks and deterministic privacy rules run before any bytes touch disk, enter the indexing model, or leave the machine.
-- **Small models write navigation only**: Each adapter uses its lightweight native model (via LangMem) solely to generate block titles, search summaries, and the `PACKAGE.md` outline. Model outputs and token usage are persisted to disk before local application so that any local apply error can reuse the saved response without paying for a second model call.
+- **Small models write navigation only**: Each adapter uses its lightweight native model solely to generate block titles, search summaries, and the `tasks/<32-char task hash>/index.md` outline (top-level `mindie-material-task/1` manifest embedding `mindie-entry/3` navigation) for 16KB-chunked blocks (`tasks/<32-char task hash>/blocks/<64-char block hash>.md`). Model outputs and token usage are persisted to disk before local application so that any local apply error can reuse the saved response without paying for a second model call.
 
 ---
 
@@ -72,7 +68,7 @@ In everyday workflows:
 ## 5. Local State Protection & Atomic Idle Updates
 
 - **Markdown is the authoritative store**:
-  - Markdown block files on disk are the sole source of truth for content; SQLite stores cursors, queues, and receipts; ReMe is an in-memory index rebuildable from Markdown at any time.
+  - Markdown files on disk (`tasks/<32-char task hash>/index.md` and `blocks/<64-char block hash>.md`, paired with local `current.json` dual-channel pointers) are the sole source of truth for content; SQLite stores cursors, queues, and receipts; ReMe (`TechnicalTokenizerV1` BM25 + `StrictFileGraph` + citation lineage merging, `blocks.sqlite3` incremental checkpoint) is a derived index rebuildable from Markdown at any time.
   - If SQLite is missing or corrupted on startup, the runtime reports a clear error while preserving all existing Markdown files and `unknown` receipts—never mistaking corruption for a fresh install.
 - **Single canonical binding & atomic idle cutover**:
   - Plugin runtimes are installed via `uv sync --locked --no-editable` into a stable application data directory outside disposable host caches, maintaining one canonical active binding.

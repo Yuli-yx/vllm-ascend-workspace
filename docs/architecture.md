@@ -20,7 +20,7 @@ MindIE Agent 的核心定位是**给开发者现有的 AI 编程客户端（Clau
   - **手动触发 `/mindie-agent`（知识、经验与 Skill 系统）**：在需要昇腾推理排障、算子开发或模型迁移时，直接使用 `/mindie-agent`（Codex 中也可使用 `$mindie-agent`；DSH 中使用 `/mindie-agent` 用户手势）并阐述你的问题，即可唤醒昇腾 Skill 体系、检索历史经验包并关联当前任务的经验闭环；平时写普通代码时完全静默、零打扰。
   - **默认自动触发 `remote-dev`（远端昇腾开发执行）**：`remote-dev` 作为常驻 MCP 工具默认就绪。日常对话中只要提到远端服务器、容器或 NPU 命令，无需输入任何斜杠命令即可直接触发远端文件读写、补丁同步与后台长任务执行。
 - **配置一次，长期有效**：首次配置好知识贡献意愿、目标公开仓库与授权项目范围后，后续所有授权范围内的任务都会自动生效。历史经验仅供 Agent 按需参考，绝不强制检索或强制投票。
-- **硬性前置指标：稳定的 GitHub 交互通道（`gh` CLI）与按需收敛 Fork 范围**：插件市场拉取、锁定发行版校验、`knowledge-vllm-ascend` 增量同步、经验闭环自动提交 PR（通过 `gh api` 与 `!gh auth git-credential`）以及可选的故障上报均依赖已登录的 `gh`（GitHub CLI）通道（DSH `0.0.1` 只读适配器不启用这些路径，因此不依赖 `gh`）。鉴于 `@mindie-agent` 组织下拥有十余个仓库，我们坚持**收敛、按需的二级 Fork 策略**：（1）**安装阶段**：校验 `gh auth status` 与 `gh auth setup-git` 后，仅顺带为统一入口仓 `mindie-agent/mindie-agent` 点亮 **Star** 并创建个人远端 **Fork**（`--clone=false`），不批量 Fork 各个插件仓或知识库；（2）**开启知识贡献阶段（按需）**：当用户明确开启面向目标公开知识库（如 `mindie-agent/knowledge-vllm-ascend`）的社区贡献时，再按需为该知识库点亮 **Star**、创建个人远端 **Fork** 并绑定 `fork` 配置（`<GH_USER>/<repo>`），确保分支推送与跨 Fork PR 提交通道就绪。
+- **硬性前置指标：稳定的 GitHub 交互通道（`gh` CLI）与按需收敛 Fork 范围**：插件市场拉取、锁定发行版校验、`knowledge-vllm-ascend` 增量同步、经验闭环自动提交 PR（通过 `gh api` 与 `!gh auth git-credential`）以及可选的故障上报均依赖已登录的 `gh`（GitHub CLI）通道。鉴于 `@mindie-agent` 组织下拥有十余个仓库，我们坚持**收敛、按需的二级 Fork 策略**：（1）**安装阶段**：校验 `gh auth status` 与 `gh auth setup-git` 后，仅顺带为统一入口仓 `mindie-agent/mindie-agent` 点亮 **Star** 并创建个人远端 **Fork**（`--clone=false`），不批量 Fork 各个插件仓或知识库；（2）**开启知识贡献阶段（按需）**：当用户明确开启面向目标公开知识库（如 `mindie-agent/knowledge-vllm-ascend`）的社区贡献时，再按需为该知识库点亮 **Star**、创建个人远端 **Fork** 并绑定 `fork` 配置（`<GH_USER>/<repo>`），确保分支推送与跨 Fork PR 提交通道就绪。
 - **聚焦核心领域**：当前首发核心领域为 `vLLM` / `vLLM-Ascend` 推理与算子工程，后续可按相同知识包架构平滑扩展更多领域。
 
 ---
@@ -32,15 +32,15 @@ MindIE Agent 采用“**宿主原生插件 + 共享运行时组件 + 开放知�
 | 组件 / 仓库 | 核心职责 |
 | --- | --- |
 | [`mindie-agent`](https://github.com/mindie-agent/mindie-agent)（本仓库） | 产品整体架构、领域边界、工程设计原则、跨组件契约与统一版本发布记录 |
-| [`mindie-agent-cc`](https://github.com/mindie-agent/mindie-agent-cc)、[`mindie-agent-codex`](https://github.com/mindie-agent/mindie-agent-codex)、[`mindie-agent-kimi`](https://github.com/mindie-agent/mindie-agent-kimi)、[`mindie-agent-dsh`](https://github.com/mindie-agent/mindie-agent-dsh) | **宿主原生插件**：负责宿主任务身份识别、首次引导配置、Hook 事件桥接、公开对话提取、调用宿主原生轻量模型、插件安装与后台无感更新（DSH `0.0.1` 仅组合只读知识与官方 `remote-dev`，不含采集/贡献/上报） |
-| [`knowledge`](https://github.com/mindie-agent/knowledge) | **知识与经验引擎**：负责准入游标管理、确定性隐私脱敏、任务知识包构建、双层混合检索（BM25 + 语义）、有用性反馈与自动 PR 提交 |
+| [`mindie-agent-cc`](https://github.com/mindie-agent/mindie-agent-cc)、[`mindie-agent-codex`](https://github.com/mindie-agent/mindie-agent-codex)、[`mindie-agent-kimi`](https://github.com/mindie-agent/mindie-agent-kimi)、[`mindie-agent-dsh`](https://github.com/mindie-agent/mindie-agent-dsh) | **宿主原生插件**：负责宿主任务身份识别、首次引导配置、Hook 事件桥接、公开对话提取、调用宿主原生轻量模型、插件安装与后台无感更新 |
+| [`knowledge`](https://github.com/mindie-agent/knowledge) | **知识与经验引擎**：负责准入游标管理、确定性隐私脱敏、任务知识包构建、基于 `TechnicalTokenizerV1` 的 ReMe 词法与图谱检索（BM25 + `StrictFileGraph` + 引用谱系归并）、有用性反馈与自动 PR 提交 |
 | [`knowledge-vllm-ascend`](https://github.com/mindie-agent/knowledge-vllm-ascend) | **公共领域知识库**：存放经过脱敏与合规审核的 `vLLM-Ascend` 结构化 Markdown 知识包，支持客户端增量同步 |
 | [`remote-dev`](https://github.com/mindie-agent/remote-dev) | **远端昇腾开发执行底座**：基于 SSH 提供远端文件读写、语法大纲/符号精读、行范围精确编辑、补丁应用、全文/文件名搜索、受管长任务执行、作业取消与构建产物同步工具，完整镜像兼容 6 大主流 Harness（Codex、Claude Code、Cursor、Kimi Code、DSH、Antigravity）的本地原生工具与参数，并直接消费 `coordinator` 同步的 `endpoints.json` 与 Endpoint Resolver |
 | [`coordinator`](https://github.com/mindie-agent/coordinator) | **升级版 SSH 与远端昇腾环境管理器（面向 Agent）**：统一管理机器台账（`machines.json` -> 自动同步 `endpoints.json`）、SSH 免密与多机容器互通（`mindie_hosts`）、远端容器绑定/开通（`mindie_container`）、Agent 级 NPU/节点/权重目录无代理探测與空闲算力推荐（`mindie_probe`）、物理 NPU 与端口租约协调（`mindie_lease`）及受管源码快照任务（`mindie_run`） |
 | [`npu-top`](https://github.com/mindie-agent/npu-top) | **昇腾集群可视化监控台（面向人类）**：复用读取 `coordinator` 的 `machines.json`，提供本地 Web 实时看板（`127.0.0.1:8788`）与 90 天有界 SQLite 热力图；Agent 侧探测统一走 `coordinator` 的 `mindie_probe`，无需依赖人类监控 Web 服务常驻 |
 | [`diagnostics`](https://github.com/mindie-agent/diagnostics) | **结构化诊断与故障上报**：提供有界本地诊断日志、错误定位编号，以及独立授权、自动去重的 GitHub Issue 故障上报 |
 
-各宿主插件共享同一套 `knowledge`、`coordinator`、`remote-dev` 和 `diagnostics` 核心实现；只有与宿主强相关的会话身份识别和 Transcript 解析留在各自插件内。DSH `0.0.1` 复用只读知识与官方 `remote-dev`，尚未实现 Stop 采集、经验贡献与故障上报，因此上手文档中的经验闭环仅适用于已实现采集的宿主适配器。
+各宿主插件共享同一套 `knowledge`、`coordinator`、`remote-dev` 和 `diagnostics` 核心实现；只有与宿主强相关的会话身份识别和 Transcript 解析留在各自插件内。
 
 ---
 
@@ -53,8 +53,8 @@ flowchart LR
     A["日常昇腾开发 / 排障会话"] --> C{"当前项目是否已开启经验沉淀？"}
     C -->|未配置或已关闭| R["仅在按需查询时返回状态说明"]
     C -->|已配置且开启| H["回合结束触发轻量 Stop Hook<br/>毫秒级记录任务增量游标"]
-    H --> L["提取公开对话并执行本地确定性脱敏<br/>保存为不可变 Markdown 分块"]
-    L --> M["调用宿主原生小模型生成分块标题、<br/>摘要与任务短导航 (PACKAGE.md)"]
+    H --> L["提取公开对话并执行本地确定性脱敏<br/>保存为按 16KB 切分的不可变 Markdown 分块"]
+    L --> M["调用宿主原生小模型生成分块标题、<br/>摘要与任务短导航 (tasks/&lt;32位任务哈希&gt;/index.md)"]
     M --> P["构建完整任务知识包<br/>自动向公开知识库发起 PR"]
     P --> B["Grok Bot 自动完成安全与合规审核"]
     B --> K["合入公开知识库<br/>(knowledge-vllm-ascend)"]
@@ -70,20 +70,20 @@ flowchart LR
 2. **毫秒级 Stop Hook，不卡终端**：每次对话回合结束时，Stop Hook 只做极轻量的本地游标登记就立即退出，既不会阻塞终端，也不会诱导大模型死循环续跑。
 3. **正文 100% 确定性脱敏，小模型只写目录导航**：
    - 落盘的对话正文只保留**用户输入**、**助手公开进展**和**最终回答**（自动剥离工具原始载荷、隐藏思维链和系统提示词），并在落盘前强制通过 Gitleaks 与隐私规则扫描（自动抹除密钥、内网 IP、SSH 账号和本地主目录路径）。
-   - 宿主原生轻量小模型（配合 LangMem）**只负责给每个新增分块生成标题、摘要和 `PACKAGE.md` 导航目录，绝不篡改或缩写对话正文**。
+   - 宿主原生轻量小模型**只负责给每个新增分块生成标题、摘要和 `tasks/<32位任务哈希>/index.md` 导航目录，绝不篡改或缩写对话正文**。
 
 ---
 
 ## 4. 知识包存储与本地状态保护
 
-每一个任务知识包都以清晰的目录结构保存在 `tasks/<task_id>/` 下：
-- `PACKAGE.md`：记录任务整体摘要、适用条件（`conditions`）与分块导航表。
-- `materials/0001.md`, `0002.md`...：按时间顺序切分的不可变脱敏对话分块。Agent 检索时可以先看 `PACKAGE.md` 目录，再按需精读某几个分块，避免把长篇历史对话一次性塞爆上下文窗口。
+本地通过 `current.json` 维护草稿（`draft`）与公共订阅（`feed`）双通道指针，每一个任务知识包都以清晰的目录结构保存在 `tasks/<32位任务哈希>/` 下：
+- `index.md`：顶层 `mindie-material-task/1` 清单（内嵌 `mindie-entry/3` 导航目录），记录任务整体摘要、适用条件（`conditions`）与分块导航表。
+- `blocks/<64位块哈希>.md`：按 16KB 切分的不可变脱敏对话分块（`mindie-material-block/1`）。Agent 检索时可以先看 `index.md` 目录，再按需精读某几个分块，避免把长篇历史对话一次性塞爆上下文窗口。
 
 在本地存储设计上：
 - **Markdown 文件是正文的唯一权威来源**；
 - **SQLite** 仅保存游标、队列、授权绑定与外部操作回执；
-- **ReMe** 在内存中维护可随时从 Markdown 重建的混合检索索引。如果 SQLite 发生缺失或损坏，系统会明确报错并完整保护已有的 Markdown 正文，绝不会把它当成“首次安装”去清空你的数据。
+- **ReMe** 基于针对昇腾/vLLM 专业标识符定制的 `TechnicalTokenizerV1` 维护 **BM25 词法检索 + Markdown 标题/文件图谱（`StrictFileGraph`）+ 引用谱系归并**派生索引（通过 `blocks.sqlite3` 维护增量 Checkpoint，不强制依赖重型本地 Embedding 向量计算），可随时从 Markdown 重建。如果 SQLite 发生缺失或损坏，系统会明确报错并完整保护已有的 Markdown 正文，绝不会把它当成“首次安装”去清空你的数据。
 
 ---
 
