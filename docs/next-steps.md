@@ -18,7 +18,7 @@
 1. **真实业务复用收益评测（End-to-End Benchmark）**
    - 依托已完成去过度防御重构与 A2 真机验证的 `mindie-bench`，独立推进端到端的昇腾工程任务评测，客观衡量知识与经验闭环在算子排障、模型迁移和性能调优中的实际提效幅度（在基准评测完成前，我们不在版本说明中做未经实测的量化夸大宣传）。
 2. **更多宿主与领域扩展**
-   - **DSH 适配器演进**：在 [`mindie-agent-dsh`](https://github.com/mindie-agent/mindie-agent-dsh) 中持续打磨原生入口、Stop 采集/脱敏/摘要索引、自动 fork 贡献、反馈与诊断在多平台及远端 NPU 上的体验。
+   - **DSH 适配器演进**：在 [`mindie-agent-dsh`](https://github.com/mindie-agent/mindie-agent-dsh) 中持续打磨原生入口、Stop 采集/脱敏/摘要索引、自动 fork 贡献、反馈与诊断，并扩展 `mindie-bench` 的 G3 原生采集与真实远端 NPU 评测。
    - **独立开箱即用 Skills 持续扩充**：在 [`awesome-mindie-skills`](https://github.com/mindie-agent/awesome-mindie-skills) 中沉淀更多昇腾 Profiling、精度比对与算子开发专项指南。
 3. **上游宿主问题跟进**
    - 持续跟踪 OpenAI Codex CLI 子代理（Subagent）中断信号向在途工具调用传递的上游修复进展；待上游合入发布后及时补齐验证并更新兼容性声明，不在插件内引入高侵入性的私有杀进程轮询器。

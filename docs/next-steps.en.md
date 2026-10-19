@@ -4,7 +4,7 @@
 
 For the current system architecture and knowledge loop design, see [Architecture & Module Boundaries](architecture.en.md) and [Knowledge & Experience System](knowledge-system.en.md). All iterations follow the [Engineering Design Principles](design-principles.en.md).
 
-Our initial [`0.0.1`](releases/0.0.1.en.md) release is live across six mainstream development environments (**Claude Code** and **OpenAI Codex CLI** on **macOS**, **native Windows**, and **Windows WSL**), alongside the formal [`mindie-agent-dsh`](https://github.com/mindie-agent/mindie-agent-dsh) `0.0.1` release.
+Our initial [`0.0.1`](releases/0.0.1.en.md) release is live across six mainstream development environments (**Claude Code** and **OpenAI Codex CLI** on **macOS**, **native Windows**, and **Windows WSL**), alongside the formal [`mindie-agent-dsh`](https://github.com/mindie-agent/mindie-agent-dsh) `0.0.2` release, now a native `mindie-bench` harness with G0/G1/G2 canaries.
 
 Building on that foundation, **`0.0.2` completes our stack-wide "Anti Over-Defensive Programming & Four-Tier Live NPU Testing" refactoring across all 10 repositories while 100% preserving the `gpt6-astra` core architecture** (taking core business logic correctness as the sole baseline and directly deleting/rewriting unreasonable defensive imaginary-enemy checks and legacy shims):
 - **Eliminated hot-path paranoia & local one-way self-bricking**: Removed per-`SELECT` SQLite `.owner`/Schema reflection checks, local upgrade/consent `suppressed`/`fault` self-bricking tombstones, and `TaskRootBusy` container rejections—retaining `unknown` receipt reconciliation strictly for irreversible external writes;
@@ -18,7 +18,7 @@ Building on that foundation, **`0.0.2` completes our stack-wide "Anti Over-Defen
 1. **Real-World Engineering Benchmarks**
    - Using the streamlined `mindie-bench` harness verified on live A2 NPUs, run end-to-end benchmarks on real Ascend operator debugging, model migration, and inference tuning workloads to measure how much time and effort the experience loop saves in practice (we avoid making premature quantitative claims before benchmarks are complete).
 2. **Broader Host & Domain Coverage**
-   - **DSH Adapter Evolution**: Continue refining native entry, Stop capture/redaction/summary indexing, auto-fork contribution, feedback, and diagnostics in [`mindie-agent-dsh`](https://github.com/mindie-agent/mindie-agent-dsh) across platforms and live remote NPUs.
+   - **DSH Adapter Evolution**: Continue refining native entry, Stop capture/redaction/summary indexing, auto-fork contribution, feedback, and diagnostics in [`mindie-agent-dsh`](https://github.com/mindie-agent/mindie-agent-dsh), and extend `mindie-bench` with G3 native capture and live remote-NPU evaluation.
    - **Expand Standalone Skills**: Grow [`awesome-mindie-skills`](https://github.com/mindie-agent/awesome-mindie-skills) with additional ready-to-use workflows for Ascend profiling, accuracy verification, and kernel development.
 3. **Upstream Host Issue Tracking**
    - Track upstream fixes in OpenAI Codex CLI for delivering cancellation signals to in-flight tool calls when a child agent (`spawn_agent`) is interrupted, updating our compatibility range once upstream ships the fix rather than adding intrusive process-hunting workarounds.
