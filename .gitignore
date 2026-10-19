@@ -10,32 +10,40 @@ __pycache__/
 venv/
 .env
 .env.*
-!.env.example
-!.env.*.example
 *.log
 *.out
 docs/superpowers/
-.claude/settings.json
-.claude/settings.local.json
+.claude/settings*.json
+.claude/worktrees/
 .codex/*
-!.codex/
-!.codex/config.example.toml
+.kimi-code/mcp.json
+.grok/*
+.mcp.json
 .vaws-local/
-.remote-dev/state/
-.remote-dev/endpoints.local.json
+.vaws-runtime/
+.remote-code-parity/
+# remote-dev is an installed package now; anything left at the old in-tree
+# path is stale local state, never source.
+.remote-dev/
 .machine-inventory.json
 .worktrees/
-.uv-cache-agent/
 
-# Cursor IDE — ignore all except rules and skills (those are tracked / shared)
+# Fork-local investigations and collected evidence are never product source.
+artifacts/
+experiments/
+.uv-cache-agent/
+.pd-dfx-golden-review/
+
+# Portable examples may be shared; populated environment files stay local.
+!.env.example
+!.env.*.example
+
+# Business repositories have their own Git history and are selected by sources.lock.json.
+/vllm/
+/vllm-ascend/
+
+# Generated MCP configuration contains local environment paths.
+# Share client guidance and skill projections only.
 .cursor/*
 !.cursor/rules/
 !.cursor/skills/
-
-# Local investigations and collected runtime evidence. Reusable logic belongs
-# in .agents/skills/, .agents/lib/, or .remote-dev/ instead.
-artifacts/
-experiments/
-
-# Temporary review workspaces created by local analysis tooling.
-.pd-dfx-golden-review/

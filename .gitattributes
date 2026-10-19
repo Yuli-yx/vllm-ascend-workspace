@@ -1,5 +1,3 @@
-# Keep Unix shell sources on LF when the workspace is checked out on Windows.
-*.sh text eol=lf
-*.bash text eol=lf
-*.zsh text eol=lf
-*.ksh text eol=lf
+# The same checkout is consumed by native Windows and WSL Git.
+# Normalize text consistently; retain Git's binary-file detection.
+* text=auto eol=lf

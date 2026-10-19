@@ -1,91 +1,44 @@
-# Repository instructions
+# MindIE Agent
 
-Local `vllm` + `vllm-ascend` development scaffold. `vllm/` and `vllm-ascend/` are Git submodules.
+This repository owns product architecture, domain boundaries, and entry documentation (`docs/`).
+Native Harness plugins live in `mindie-agent-codex`, `mindie-agent-cc`, `mindie-agent-kimi`, and `mindie-agent-dsh`.
+Shared runtime components live in `knowledge`, `remote-dev`, `diagnostics`, `npu-top`, and `coordinator`.
 
-This repository provides a remote development substrate first, then
-vLLM-Ascend skills on top.
+## 1. Core Operating Rules (Always Active)
 
-## Remote development model
+- **Repository Boundary**: This repo contains documentation and architecture assets only—no runtime bootstrap, MCP server, client hook, Skill catalogue, or dependency lock. Do not add legacy VAWS aliases or alter the user's unrelated skills, plugins, or MCP configurations.
+- **Inner-Loop Efficiency (Principle 1 — Total Cost First)**:
+  - Edit files directly in the active checkout and verify only the affected scope.
+  - Never invent intermediate freeze steps, duplicate snapshot directories, or `readback.json`/`restoration.json`/`shadow.json` audit ceremonies during routine development.
+- **Transparency, No Silent Fallbacks & State Honesty (Principle 9 & 14)**:
+  - Keep implementation status, target design, and real acceptance evidence distinct.
+  - Errors must remain visible to the caller; distinguish `completed`, `failed`, and `unknown` external effects. Never mask a failure as `{}` / `"active"` / `exit 0`, never let `except OSError:` swallow `TimeoutError`, never overwrite a succeeded remote result with `isError=True` due to a local receipt-accounting timeout, and never blindly retry an uncertain external write.
+- **Timeout Arithmetic & Anti Over-Defensive Programming (Principle 10 & 15 — `v0.0.2` Four Iron Rules)**:
+  - Take core business logic correctness as the sole baseline; directly delete and rewrite unreasonable defensive imaginary-enemy checks, shadow state machines, and obsolete shims.
+  - Enforce `outer_timeout >= sum(inner_budgets) + cleanup_grace` (e.g., `STOP_DRAIN >= STOP_GRACE + 3s`, verifier `outer_timeout >= inner_timeout + inventory_grace`, independent budgets for multi-stage SSH mux diagnostics, and never `timeout N cmd || cmd`), WAL + `3s–5s` SQLite timeouts, and bounded subprocess/handshake waits.
+  - **Four `v0.0.2` Iron Rules**: (1) Lightweight SQLite connection (`open_database` sets WAL + `busy_timeout=5000` once; never run `.owner` `lstat` or `:memory:` schema reflection on every `SELECT`); (2) Reserve `unknown` receipts strictly for irreversible external writes, abolishing local one-way self-bricking (`suppressed` / permanent `fault` / `TaskRootBusy`); (3) No cross-repo copy-pasted `*_fallback.py`/`*_bootstrap.py` shadow state machines or `ctypes` Win32 ACL ceremonies (use `os.replace()`); (4) No `inspect.signature` internal parameter locks or giant inline Python string blobs (`REMOTE_FILE_PY` must be a standalone `.py` module).
+- **Testing Design Guidelines (No Filler, Silent-Fallback, or Prose-Grep Tests; Standing Live A2/A3 NPU Tiered Verification)**:
+  1. **Every Test Must Earn Its Keep**: Never write filler tests that merely check Python types/defensive `ValueError` branches, repeatedly test `chmod`/`symlink` hypotheticals, ratify silent error swallowing (`exit 0`/`{}` on failure), assert static constant/enum string lists, or regex-grep `README.md`/`SKILL.md` prose; never tamper with production scripts or fabricate `MagicMock` payloads that diverge from real server/hardware schemas to fake a pass.
+  2. **Four-Tier Testing Pyramid (Tier 0 – Tier 3, Standing A2/A3 Ascend NPU Environment)**:
+     - **Tier 0 (Pure In-Memory Core Logic Unit Tests, `< 5s`)**: Zero subprocesses, zero network, zero `sleep`; covers parsers (backed by real A2 910B / A3 910C / A5 hardware Golden Captures), state-machine transitions (`InMemoryHostQueue` and real in-memory loops), redaction rules, domain retrieval precision/recall, and protocol translation.
+     - **Tier 1 (Local Component Contract & Process Boundary Tests, `< 15s`)**: Reuses session-scoped pre-built Git/SQLite templates to verify cross-process locks, `python -I` isolated startup, and millisecond injectable timeout cleanup (no in-test `pip install` or 10MB `fsync` barrages).
+     - **Tier 2 (Standing A2/A3 NPU Non-Destructive Live Integration `@pytest.mark.live_npu`, `< 25s`)**: Connects directly to standing A2 (`173.125.1.2`) and A3 (`192.168.13.165` / `.156` / `.154`) clusters using isolated sandbox directories (e.g., `state_dir="/tmp/mindie-npu-test-<uuid>"`) without disturbing active workloads to verify live `npu-smi` probing, multi-Die `Phy-ID` mapping, Docker container pass-through, Linux `/proc` process-tree draining, and lease anti-preemption.
+     - **Tier 3 (End-to-End Host CLI & `mindie-bench` Live Canary Acceptance, `< 90s`)**: Drives real host CLIs and `mindie-bench` Canary tasks for closed-loop verification.
+- **Agent-Native Coding & Commenting Standards (Principle 17 — 100% Agent-Maintained Codebase)**:
+  1. **Module Size & Context-Window Friendliness**: Keep core modules concise and cohesive (target `< 800` lines per file so a single `view_file` call loads the full module); ban 5–6 layer subprocess trampolines and pass-through wrappers.
+  2. **Mandatory Module-Top Agent Invariant Header**: Every core module must declare `[Role]`, `[Invariants]`, `[Timeouts & Locks]`, and `[Side-Effect Policy]` within its first 30 lines.
+  3. **Why & Invariants over Defensive Excuses**: Comments must explain business invariants, protocol boundaries, and non-obvious hardware behaviors (e.g., Ascend A3 dual-Die `Phy-ID` `0..15` mapping or Linux `/proc` container PID draining)—never restate literal code or rationalize imaginary-enemy defensive checks.
 
-Use native client tools for local files and local shell work.
+## 2. Progressive Disclosure Map (Read Only When Triggered)
 
-Use remote companion tools for remote endpoints. The remote tools mirror native
-tool semantics and only add endpoint fields:
+Do not preload all documentation into context. Read only the document matching your current task:
 
-| Local tool | Remote tool |
-|------------|-------------|
-| Read | `remote.read` |
-| Edit | `remote.edit` |
-| Write | `remote.write` |
-| Bash | `remote.bash` |
-| Glob | `remote.glob` |
-| Grep | `remote.grep` |
-| LS | `remote.ls` |
-| Monitor | `remote.monitor` |
-| apply_patch | `remote.apply_patch` |
-
-Default endpoint fields:
-
-- `host`
-- `port`
-- `user`, default `root`
-- `root`, default `/`
-- `cwd`, default `/vllm-workspace`
-
-Prefer `host + port` direct endpoints for ordinary remote development.
-`session_id`, `session_file`, and `machine` remain advanced compatibility
-paths for managed VAWS sessions and legacy single-tenant flows.
-
-Prefer remote companion tools for ordinary remote development. Hooks are
-permissive by default, and direct endpoints default to full remote-path
-permission (`root=/`). Pass a narrower `root` explicitly when a task requires
-path isolation.
-
-## Skills
-
-Repo-local skills live under `.agents/skills/`. Each has its own `SKILL.md` with usage, entry points, and routing rules — read that before invoking.
-
-| Skill | Purpose |
-|-------|---------|
-| `repo-init` | Initialize workspace: `gh`, GitHub auth, submodules, fork topology |
-| `machine-management` | Add / verify / repair / remove a remote NPU machine |
-| `session-management` | Create / inspect / remove isolated agent sessions (local worktree + remote container + leases) |
-| `remote-toolbox` | Compatibility backend for managed VAWS target/probe/exec/job/sync/service/artifact/cleanup tools |
-| `remote-code-parity` | Sync local working tree to remote container before execution |
-| `vllm-ascend-build` | Compile pinned vLLM/Ascend revisions, assess native rebuild needs, and verify runtime parity |
-| `aisbench-accuracy` | Run dataset accuracy evaluation with aligned sampling, prompts, postprocessing and baseline settings |
-| `modelscope` | Download / resume / status-check / SHA256-verify ModelScope model weights under explicit local directories |
-| `vllm-ascend-serving` | Start / check / stop a vLLM Ascend service on a remote container |
-| `vllm-ascend-benchmark` | Run `vllm bench serve` benchmarks (single-run or multi-run with warmup) |
-| `ascend-memory-profiling` | Profile HBM memory usage on Ascend NPU for vLLM serving scenarios |
-| `ascend-profiling-collection` | Collect one Ascend torch-profiler case end-to-end (start service, bracket workload with `/start_profile` + `/stop_profile`, run `analyse()`, verify outputs, write manifest) |
-| `ascend-profiling-analysis` | Analyze collected Ascend torch-profiler roots/manifests and generate reports |
-
-None of these are gates for normal local coding, docs work, or unrelated Git tasks.
-For remote endpoint work, prefer `.remote-dev` tools first and use these skills
-for domain workflows.
-
-## Repo-wide rules
-
-- Never write secrets, passwords, or tokens into tracked files.
-- Keep VAWS runtime state under `.vaws-local/` and remote-dev endpoint/tool
-  state under `.remote-dev/state/`. Both are untracked.
-- Keep `.gitmodules` on community upstream URLs.
-- Prefer `.remote-dev` remote companion tools or skill wrapper scripts over raw SSH / shell commands for remote operations.
-- Skill wrappers: progress on `stderr`, final JSON on `stdout`.
-- Use the remote-dev substrate for agent-facing remote read/edit/bash/search/patch/job/artifact work. Use the remote toolbox entrypoints as the managed VAWS compatibility backend before falling back to bare SSH.
-- For parallel managed remote work, create or reuse a `session-management` session and pass `--session-id` through parity, serving, benchmark, and profiling commands. Legacy `--machine` flows remain available for explicitly single-tenant work.
-- This repo targets Huawei Ascend NPU. Local machines (Mac/PC) cannot run `torch`/`torch_npu`-dependent code. Do not attempt local test execution — go straight to the remote container.
-
-## Repository content boundaries
-
-- Put reusable agent workflows in `.agents/skills/<skill>/`, shared Python code in `.agents/lib/`, and reusable remote primitives in `.remote-dev/`.
-- Keep `.agents/skills/` as the canonical skill source. Tool-specific files under `.claude/`, `.cursor/`, and `.trae/` should stay thin and route back to the canonical package unless that tool requires a real adapter.
-- Do not commit local experiments, issue investigations, collected logs, benchmark outputs, runtime snapshots, archives, packet captures, or handoff bundles. Keep them under ignored `experiments/` or `artifacts/` directories.
-- If an experiment produces reusable logic, extract only the stable, parameterized part into the appropriate skill or library and add documentation and regression coverage there. Do not promote machine IPs, credentials, user paths, fixed device assignments, or case-specific patches.
-- Keep examples safe and portable: commit `*.example` templates, but keep populated environment files and endpoint inventories local.
-- See `docs/repository-layout.md` for the ownership and commit policy of each top-level area.
-
-## Maintenance
-
-When changing a skill, update the whole package together: `SKILL.md`, `scripts/`, `references/`, `agents/`, and other supporting files as applicable. When the change affects shared state, also update `.agents/scripts/workspace_profile.py`, `.agents/lib/vaws_local_state.py`, `.agents/lib/vaws_session_id.py`, `.agents/lib/vaws_session_state.py`, and `.agents/lib/vaws_remote_toolbox.py` as applicable.
+- **Architecture & Domain Boundaries** → [`docs/architecture.md`](docs/architecture.md)
+- **Product, Engineering & Testing Principles** → [`docs/design-principles.md`](docs/design-principles.md) & [`docs/testing-architecture.md`](docs/testing-architecture.md)
+- **Harness Plugin Boundary, Hooks & Lifecycle** → [`docs/harness-boundary-and-lifecycle.md`](docs/harness-boundary-and-lifecycle.md) & [`docs/native-runtime-reuse.md`](docs/native-runtime-reuse.md)
+- **Knowledge Flywheel & Privacy Redaction** → [`docs/knowledge-system.md`](docs/knowledge-system.md)
+- **Diagnostics & Issue Reporting** → [`docs/diagnostics-and-reporting.md`](docs/diagnostics-and-reporting.md)
+- **Gate — Submitting or Updating a Development PR**:
+  - Read and complete [`docs/design-principles.md#三开发-pr-提交前自查清单pre-pr-review`](docs/design-principles.md#三开发-pr-提交前自查清单pre-pr-review) before creating/updating any PR (including drafts), and include the concise review summary in the PR description.
+- **Gate — Publishing a Formal Component or Plugin Release**:
+  - Read and execute [`docs/release-compatibility-and-update.md#组件与插件配套发布`](docs/release-compatibility-and-update.md#组件与插件配套发布) only when publishing or auditing a formal GitHub Release.
